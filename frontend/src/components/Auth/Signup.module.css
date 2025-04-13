@@ -1,0 +1,123 @@
+/* Import styles from Login to maintain consistency */
+.authContainer {
+  composes: authContainer from './Login.module.css';
+}
+.authCard {
+  composes: authCard from './Login.module.css';
+}
+.authHeader {
+  composes: authHeader from './Login.module.css';
+}
+.authTitle {
+  composes: authTitle from './Login.module.css';
+}
+.authSubtitle {
+  composes: authSubtitle from './Login.module.css';
+}
+.authForm {
+  composes: authForm from './Login.module.css';
+}
+.roleSelection {
+  composes: roleSelection from './Login.module.css';
+}
+.roleCard {
+  composes: roleCard from './Login.module.css';
+}
+.roleCardSelected {
+  composes: roleCardSelected from './Login.module.css';
+}
+.roleIcon {
+  composes: roleIcon from './Login.module.css';
+}
+.roleTitle {
+  composes: roleTitle from './Login.module.css';
+}
+.roleDescription {
+  composes: roleDescription from './Login.module.css';
+}
+.submitButton {
+  composes: submitButton from './Login.module.css';
+}
+.authFooter {
+  composes: authFooter from './Login.module.css';
+}
+.authFooterLink {
+  composes: authFooterLink from './Login.module.css';
+}
+.errorMessage {
+  composes: errorMessage from './Login.module.css';
+}
+.formDivider {
+  composes: formDivider from './Login.module.css';
+}
+.formDividerText {
+  composes: formDividerText from './Login.module.css';
+}
+.formGroup {
+  composes: formGroup from './Login.module.css';
+}
+.input {
+  composes: input from './Login.module.css';
+}
+.inputError {
+  composes: inputError from './Login.module.css';
+}
+.fieldError {
+  composes: fieldError from './Login.module.css';
+}
+
+/* Additional styles specific to signup */
+.passwordRequirements {
+  margin-top: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.passwordStrength {
+  height: 4px;
+  margin-top: var(--spacing-xs);
+  border-radius: var(--border-radius-pill);
+  transition: width var(--transition-medium), background-color var(--transition-medium);
+}
+
+.weak {
+  width: 33%;
+  background-color: var(--color-error);
+}
+
+.medium {
+  width: 66%;
+  background-color: var(--color-warning);
+}
+
+.strong {
+  width: 100%;
+  background-color: var(--color-success);
+}
+
+.requirementsList {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--spacing-xs);
+}
+
+.requirementsList li {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.requirementsList li::before {
+  content: "•";
+  margin-right: var(--spacing-xs);
+}
+
+.requirementMet {
+  color: var(--color-success);
+}
+
+.requirementsList li.requirementMet::before {
+  content: "✓";
+} 

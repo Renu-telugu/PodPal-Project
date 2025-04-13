@@ -2,17 +2,21 @@ import React from "react";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "./ThemeToggle";
 
 // Styled components
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  transition: all ${({ theme }) => theme.transitions.medium};
 `;
 
 const Header = styled.header`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
-  background-color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.cardBackground};
   box-shadow: ${({ theme }) => theme.shadows.sm};
   display: flex;
   justify-content: space-between;
@@ -20,6 +24,7 @@ const Header = styled.header`
   position: sticky;
   top: 0;
   z-index: 10;
+  transition: all ${({ theme }) => theme.transitions.medium};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     padding: ${({ theme }) => theme.spacing.md};
@@ -80,7 +85,8 @@ const Button = styled.button`
 const Main = styled.main`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.xl};
-  background-color: ${({ theme }) => theme.colors.accent};
+  background-color: ${({ theme }) => theme.colors.background};
+  transition: all ${({ theme }) => theme.transitions.medium};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     padding: ${({ theme }) => theme.spacing.lg};
@@ -89,21 +95,45 @@ const Main = styled.main`
 
 const Footer = styled.footer`
   padding: ${({ theme }) => theme.spacing.lg};
-  background-color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.cardBackground};
   text-align: center;
-  color: ${({ theme }) => theme.colors.darkGray};
+  color: ${({ theme }) => theme.colors.textLight};
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  border-top: 1px solid ${({ theme }) => theme.colors.lightGray};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  transition: all ${({ theme }) => theme.transitions.medium};
+`;
+
+// Theme toggle wrapper with some spacing
+const ThemeToggleWrapper = styled.div`
+  margin-left: ${({ theme }) => theme.spacing.md};
+`;
+
+// User welcome message with indication of role
+const UserWelcome = styled.div`
+  display: flex;
+  align-items: center;
+  color: ${({ theme }) => theme.colors.text};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+`;
+
+const RoleIndicator = styled.span`
+  color: ${({ theme, isAdmin }) => 
+    isAdmin ? theme.colors.error : theme.colors.primary};
+  font-weight: 600;
+  margin-left: 0.25rem;
 `;
 
 // Layout component
 const Layout = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, getUserRole } = useAuth();
   const navigate = useNavigate();
+  const userRole = getUserRole();
+  const isAdmin = userRole === 'admin';
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    // Redirect to home page instead of dashboard
+    navigate("/");
   };
 
   return (
@@ -111,9 +141,18 @@ const Layout = ({ children }) => {
       <Header>
         <Logo to="/">PodPal</Logo>
         <Nav>
+          <ThemeToggleWrapper>
+            <ThemeToggle />
+          </ThemeToggleWrapper>
+          
           {user ? (
             <>
-              <span>Welcome, {user.name}</span>
+              <UserWelcome>
+                Welcome, {user.name}
+                <RoleIndicator isAdmin={isAdmin}>
+                  ({isAdmin ? 'Admin' : 'User'})
+                </RoleIndicator>
+              </UserWelcome>
               <Button onClick={handleLogout}>Logout</Button>
             </>
           ) : (
@@ -126,7 +165,7 @@ const Layout = ({ children }) => {
       </Header>
       <Main>{children}</Main>
       <Footer>
-        &copy; {new Date().getFullYear()} AuthApp. All rights reserved.
+        &copy; {new Date().getFullYear()} PodPal. All rights reserved.
       </Footer>
     </Container>
   );

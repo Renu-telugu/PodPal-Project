@@ -1,0 +1,73 @@
+:root {
+  /* Main Color Palette */
+  --color-dark-purple: #10002b;
+  --color-deep-purple: #240046;
+  --color-rich-purple: #3c096c;
+  --color-purple: #5a189a;
+  --color-medium-purple: #7b2cbf;
+  --color-bright-purple: #9d4edd;
+  --color-light-purple: #c77dff;
+  --color-pale-purple: #e0aaff;
+
+  /* Semantic Colors */
+  --color-primary: var(--color-purple);
+  --color-secondary: var(--color-bright-purple);
+  --color-accent: var(--color-pale-purple);
+  --color-background: #f9f7fe;
+  --color-card-background: #ffffff;
+  --color-dark-background: var(--color-dark-purple);
+
+  /* Text Colors */
+  --color-text: #333333;
+  --color-text-light: #666666;
+  --color-text-lighter: #999999;
+  --color-text-dark: var(--color-dark-purple);
+  --color-text-on-dark: #ffffff;
+  --color-heading: var(--color-deep-purple);
+
+  /* Border Colors */
+  --color-border: #e1e1e1;
+  --color-border-focus: var(--color-medium-purple);
+
+  /* Status Colors */
+  --color-success: #28a745;
+  --color-info: var(--color-medium-purple);
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--color-purple) 0%, var(--color-bright-purple) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--color-deep-purple) 0%, var(--color-purple) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-bright-purple) 0%, var(--color-light-purple) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 12px rgba(123, 44, 191, 0.08);
+  --shadow-button: 0 4px 6px rgba(157, 78, 221, 0.2);
+  --shadow-button-hover: 0 6px 8px rgba(157, 78, 221, 0.25);
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-xxl: 3rem;
+
+  /* Border Radius */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+  --border-radius-pill: 9999px;
+
+  /* Typography */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-family-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+  /* Animation */
+  --transition-fast: 0.15s ease;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.5s ease;
+} 

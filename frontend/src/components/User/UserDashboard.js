@@ -1,0 +1,145 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Dashboard from '../Layout/Dashboard';
+import UserHome from './UserHome';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faHome, 
+  faSearch, 
+  faBookOpen, 
+  faUpload, 
+  faMicrophone, 
+  faFileAlt, 
+  faUser, 
+  faCog, 
+  faCreditCard 
+} from '@fortawesome/free-solid-svg-icons';
+import styles from './UserDashboard.module.css';
+
+// Sample content components for each route
+const SampleContent = ({ title, description }) => (
+  <div className={styles.samplePage}>
+    <h2>{title}</h2>
+    <p>{description}</p>
+    <div className={styles.sampleContent}>
+      <div className={styles.placeholderSection}>
+        <div className={styles.placeholderHeader}></div>
+        <div className={styles.placeholderBody}>
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className={styles.placeholderItem}></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const BrowsePodcasts = () => (
+  <SampleContent 
+    title="Browse Podcasts" 
+    description="Discover new podcasts across various categories. Filter by genre, popularity, or release date."
+  />
+);
+
+const MyLibrary = () => (
+  <SampleContent 
+    title="My Library" 
+    description="Access your saved podcasts, favorite episodes, and custom playlists."
+  />
+);
+
+const UploadPodcast = () => (
+  <SampleContent 
+    title="Upload Podcast" 
+    description="Share your own podcasts with the PodPal community. Fill out metadata and upload audio files."
+  />
+);
+
+const MyPodcasts = () => (
+  <SampleContent 
+    title="My Podcasts" 
+    description="Manage your uploaded podcasts, view analytics, and edit podcast information."
+  />
+);
+
+const Drafts = () => (
+  <SampleContent 
+    title="Drafts" 
+    description="Continue working on your podcast drafts before publishing them."
+  />
+);
+
+const Profile = () => (
+  <SampleContent 
+    title="Profile" 
+    description="Update your personal information, profile picture, and public bio."
+  />
+);
+
+const Settings = () => (
+  <SampleContent 
+    title="Settings" 
+    description="Manage your account settings, notification preferences, and privacy options."
+  />
+);
+
+const Subscription = () => (
+  <SampleContent 
+    title="Subscription" 
+    description="View and manage your subscription plan, billing information, and payment history."
+  />
+);
+
+/**
+ * User Dashboard component
+ * Handles routing for user-specific pages and provides the dashboard layout
+ */
+const UserDashboard = () => {
+  // Define menu items for user sidebar
+  const userMenuItems = [
+    {
+      section: 'Main',
+      items: [
+        { label: 'Home', path: '/user/dashboard', icon: <FontAwesomeIcon icon={faHome} /> },
+        { label: 'Browse Podcasts', path: '/user/browse', icon: <FontAwesomeIcon icon={faSearch} /> },
+        { label: 'My Library', path: '/user/library', icon: <FontAwesomeIcon icon={faBookOpen} /> }
+      ]
+    },
+    {
+      section: 'Content',
+      items: [
+        { label: 'Upload Podcast', path: '/user/upload', icon: <FontAwesomeIcon icon={faUpload} /> },
+        { label: 'My Podcasts', path: '/user/my-podcasts', icon: <FontAwesomeIcon icon={faMicrophone} /> },
+        { label: 'Drafts', path: '/user/drafts', icon: <FontAwesomeIcon icon={faFileAlt} /> }
+      ]
+    },
+    {
+      section: 'Account',
+      items: [
+        { label: 'Profile', path: '/user/profile', icon: <FontAwesomeIcon icon={faUser} /> },
+        { label: 'Settings', path: '/user/settings', icon: <FontAwesomeIcon icon={faCog} /> },
+        { label: 'Subscription', path: '/user/subscription', icon: <FontAwesomeIcon icon={faCreditCard} /> }
+      ]
+    }
+  ];
+  
+  return (
+    <Dashboard menuItems={userMenuItems.flatMap(section => section.items)} pageTitle="User Dashboard">
+      <Routes>
+        <Route path="/" element={<Navigate to="/user/dashboard" replace />} />
+        <Route path="/dashboard" element={<UserHome />} />
+        <Route path="/browse" element={<BrowsePodcasts />} />
+        <Route path="/library" element={<MyLibrary />} />
+        <Route path="/upload" element={<UploadPodcast />} />
+        <Route path="/my-podcasts" element={<MyPodcasts />} />
+        <Route path="/drafts" element={<Drafts />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/subscription" element={<Subscription />} />
+        <Route path="*" element={<Navigate to="/user/dashboard" replace />} />
+      </Routes>
+    </Dashboard>
+  );
+};
+
+export default UserDashboard; 
