@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import styled from "styled-components";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 // Styled components
 const Container = styled.div`
@@ -57,9 +57,12 @@ const NavLink = styled(Link)`
 `;
 
 const Button = styled.button`
-  background-color: ${({ theme, primary }) => primary ? theme.colors.primary : 'transparent'};
-  color: ${({ theme, primary }) => primary ? theme.colors.white : theme.colors.primary};
-  border: ${({ theme, primary }) => primary ? 'none' : `1px solid ${theme.colors.primary}`};
+  background-color: ${({ theme, primary }) =>
+    primary ? theme.colors.primary : "transparent"};
+  color: ${({ theme, primary }) =>
+    primary ? theme.colors.white : theme.colors.primary};
+  border: ${({ theme, primary }) =>
+    primary ? "none" : `1px solid ${theme.colors.primary}`};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   font-weight: 500;
@@ -67,8 +70,10 @@ const Button = styled.button`
   transition: all ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background-color: ${({ theme, primary }) => primary ? theme.colors.secondary : theme.colors.accent};
-    border-color: ${({ theme, primary }) => primary ? 'none' : theme.colors.secondary};
+    background-color: ${({ theme, primary }) =>
+      primary ? theme.colors.secondary : theme.colors.accent};
+    border-color: ${({ theme, primary }) =>
+      primary ? "none" : theme.colors.secondary};
   }
 `;
 
@@ -98,13 +103,13 @@ const Layout = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
     <Container>
       <Header>
-        <Logo to="/">AuthApp</Logo>
+        <Logo to="/">PodPal</Logo>
         <Nav>
           {user ? (
             <>
@@ -119,9 +124,7 @@ const Layout = ({ children }) => {
           )}
         </Nav>
       </Header>
-      <Main>
-        {children}
-      </Main>
+      <Main>{children}</Main>
       <Footer>
         &copy; {new Date().getFullYear()} AuthApp. All rights reserved.
       </Footer>
@@ -129,4 +132,4 @@ const Layout = ({ children }) => {
   );
 };
 
-export default Layout; 
+export default Layout;

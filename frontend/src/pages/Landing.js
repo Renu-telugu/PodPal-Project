@@ -1,9 +1,9 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import Layout from '../components/Layout';
-import { Button } from '../components/FormElements';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled, { keyframes } from "styled-components";
+import Layout from "../components/Layout";
+import { Button } from "../components/FormElements";
+import { useAuth } from "../context/AuthContext";
 
 // Animations
 const fadeIn = keyframes`
@@ -36,11 +36,11 @@ const Title = styled.h1`
   font-size: 3rem;
   color: ${({ theme }) => theme.colors.primary};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     font-size: 2.5rem;
   }
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     font-size: 2rem;
   }
@@ -49,9 +49,9 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.lg};
   color: ${({ theme }) => theme.colors.darkGray};
-  max-width: 600px;
+  max-width: 700px;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     font-size: ${({ theme }) => theme.fontSizes.md};
   }
@@ -60,7 +60,7 @@ const Subtitle = styled.p`
 const ButtonContainer = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     flex-direction: column;
     width: 100%;
@@ -78,9 +78,10 @@ const FeaturesSection = styled.section`
   background-color: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   box-shadow: ${({ theme }) => theme.shadows.sm};
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing.xl}
+      ${({ theme }) => theme.spacing.md};
   }
 `;
 
@@ -94,11 +95,11 @@ const FeatureGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: ${({ theme }) => theme.spacing.xl};
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     grid-template-columns: 1fr;
   }
@@ -109,8 +110,9 @@ const FeatureCard = styled.div`
   background-color: ${({ theme }) => theme.colors.accent};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   text-align: center;
-  transition: transform ${({ theme }) => theme.transitions.default}, box-shadow ${({ theme }) => theme.transitions.default};
-  
+  transition: transform ${({ theme }) => theme.transitions.default},
+    box-shadow ${({ theme }) => theme.transitions.default};
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: ${({ theme }) => theme.shadows.md};
@@ -126,17 +128,17 @@ const FeatureDescription = styled.p`
   color: ${({ theme }) => theme.colors.darkGray};
 `;
 
-// Landing page component
+// PodPal Landing Page
 const Landing = () => {
   const { isAuthenticated } = useAuth();
-  
+
   return (
     <Layout>
       <HeroSection>
-        <Title>Welcome to AuthApp</Title>
+        <Title>Welcome to PodPal</Title>
         <Subtitle>
-          A secure and modern authentication system built with the MERN stack.
-          Sign up now to get started!
+          PodPal is your personalized podcast manager. Upload, explore,
+          bookmark, and share your voice with the world — all in one place.
         </Subtitle>
         <ButtonContainer>
           {isAuthenticated() ? (
@@ -155,26 +157,29 @@ const Landing = () => {
           )}
         </ButtonContainer>
       </HeroSection>
-      
+
       <FeaturesSection>
-        <SectionTitle>Key Features</SectionTitle>
+        <SectionTitle>What Makes PodPal Special</SectionTitle>
         <FeatureGrid>
           <FeatureCard>
-            <FeatureTitle>Secure Authentication</FeatureTitle>
+            <FeatureTitle>Personal Channels</FeatureTitle>
             <FeatureDescription>
-              Industry-standard security with JWT tokens and password hashing.
+              Each user gets a dedicated channel to share their podcasts, grow
+              followers, and earn badges.
             </FeatureDescription>
           </FeatureCard>
           <FeatureCard>
-            <FeatureTitle>Modern UI</FeatureTitle>
+            <FeatureTitle>Moderated Uploads</FeatureTitle>
             <FeatureDescription>
-              Clean and responsive design that works on all devices.
+              Ensures quality content with automated checks and manual review
+              before going live.
             </FeatureDescription>
           </FeatureCard>
           <FeatureCard>
-            <FeatureTitle>MERN Stack</FeatureTitle>
+            <FeatureTitle>Listen & Bookmark</FeatureTitle>
             <FeatureDescription>
-              Built with MongoDB, Express, React, and Node.js.
+              Stream or download your favorite podcasts and bookmark episodes
+              for later.
             </FeatureDescription>
           </FeatureCard>
         </FeatureGrid>
@@ -183,4 +188,4 @@ const Landing = () => {
   );
 };
 
-export default Landing; 
+export default Landing;
