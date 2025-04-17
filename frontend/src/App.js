@@ -6,16 +6,17 @@ import { lightTheme, darkTheme } from './styles/theme';
 
 // Pages
 import Landing from './pages/Landing';
-// Use Login/Signup from components/Auth instead of pages
-import Login from './components/Auth/Login';
-import Signup from './components/Auth/Signup';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import UploadPodcast from './pages/UploadPodcast';
 import NotFound from './pages/NotFound';
 
 // Route protection
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleBasedRoute from './components/Auth/RoleBasedRoute';
 
-// Dashboard layouts - if these files don't exist, they'll be created
+// Dashboard layouts
 import UserDashboard from './components/User/UserDashboard'; 
 import AdminDashboard from './components/Admin/AdminDashboard';
 
@@ -37,14 +38,13 @@ const AppContent = () => {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/upload" element={<UploadPodcast />} />
           
           {/* Protected routes with role-based access */}
           <Route path="/user/*" element={
             <ProtectedRoute>
               <RoleBasedRoute allowedRole="user">
-                <Routes>
-                  <Route path="dashboard" element={<UserDashboard />} />
-                </Routes>
+                <UserDashboard />
               </RoleBasedRoute>
             </ProtectedRoute>
           } />
@@ -52,14 +52,12 @@ const AppContent = () => {
           <Route path="/admin/*" element={
             <ProtectedRoute>
               <RoleBasedRoute allowedRole="admin">
-                <Routes>
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                </Routes>
+                <AdminDashboard />
               </RoleBasedRoute>
             </ProtectedRoute>
           } />
           
-          {/* Fallback for 404 */}
+          {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
@@ -67,13 +65,14 @@ const AppContent = () => {
   );
 };
 
+// Main App component
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
         <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
