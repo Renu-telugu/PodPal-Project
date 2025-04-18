@@ -1,0 +1,123 @@
+.cardContainer {
+  background-color: var(--color-card-background, #ffffff);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContainer:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.cardImage {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.cardContainer:hover .cardImage img {
+  transform: scale(1.05);
+}
+
+.playButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+  cursor: pointer;
+}
+
+.cardContainer:hover .playButton {
+  opacity: 1;
+}
+
+.playButton:hover {
+  background-color: var(--color-primary, #7C3AED);
+}
+
+.cardContent {
+  padding: 16px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--color-text, #1F2937);
+}
+
+.cardDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-light, #6B7280);
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cardMeta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-text-light, #6B7280);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardFooter {
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border, #E5E7EB);
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-light, #6B7280);
+}
+
+.creator {
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .cardImage {
+    height: 160px;
+  }
+  
+  .playButton {
+    width: 40px;
+    height: 40px;
+  }
+} 

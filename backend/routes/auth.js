@@ -1,5 +1,5 @@
 const express = require('express');
-const { signup, login } = require('../controllers/auth');
+const { signup, login, getPasswordRequirements } = require('../controllers/auth');
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.post('/signup', signup);
 
 // Login route
 router.post('/login', login);
+
+// Get password requirements
+router.get('/password-requirements', getPasswordRequirements);
 
 module.exports = router; 

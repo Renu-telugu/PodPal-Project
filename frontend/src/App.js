@@ -20,6 +20,10 @@ import UploadPodcast from "./pages/UploadPodcast";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import UserDashboard from "./components/User/UserDashboard";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ExplorePodcasts from "./pages/ExplorePodcasts";
 
 // Context
 import { AuthProvider } from "./context/AuthContext";
@@ -50,12 +54,25 @@ const App = () => {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/explore" element={<ExplorePodcasts />} />
               <Route
                 path="/user/*"
                 element={
                   <ProtectedRoute>
                     <RoleBasedRoute allowedRole="user">
                       <UserDashboard />
+                    </RoleBasedRoute>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute>
+                    <RoleBasedRoute allowedRole="admin">
+                      <AdminDashboard />
                     </RoleBasedRoute>
                   </ProtectedRoute>
                 }

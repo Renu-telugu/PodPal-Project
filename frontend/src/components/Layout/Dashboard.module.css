@@ -160,18 +160,25 @@
   transition: all 0.2s ease;
 }
 
-.menuLink:hover, .menuLink.active {
+.menuLink:hover {
   background-color: var(--sidebar-item-hover);
   color: #fff;
 }
 
-.menuLink.active {
-  background-color: var(--sidebar-item-active);
+.activeMenuLink {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: var(--dashboard-border-radius-md);
   color: #fff;
+  text-decoration: none;
+  gap: 12px;
+  transition: all 0.2s ease;
+  background-color: var(--sidebar-item-active);
   position: relative;
 }
 
-.menuLink.active::before {
+.activeMenuLink::before {
   content: '';
   position: absolute;
   left: 0;
@@ -189,12 +196,24 @@
   align-items: center;
   justify-content: center;
   width: 24px;
-  color: var(--dashboard-primary);
+  color: rgba(255, 255, 255, 0.8) !important;
+  min-width: 24px;
+}
+
+.activeMenuLink .menuIcon,
+.menuLink:hover .menuIcon {
+  color: white !important;
 }
 
 .menuLabel {
   font-size: 0.875rem;
   white-space: nowrap;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.activeMenuLink .menuLabel,
+.menuLink:hover .menuLabel {
+  color: white;
 }
 
 .sidebarFooter {

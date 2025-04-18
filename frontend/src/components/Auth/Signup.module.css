@@ -120,4 +120,131 @@
 
 .requirementsList li.requirementMet::before {
   content: "✓";
+}
+
+/* Server message styling */
+.serverMessage {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.errorMessage {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-left: 4px solid #ef4444;
+}
+
+.successMessage {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border-left: 4px solid #22c55e;
+}
+
+/* Password requirements styling */
+.passwordRequirementsHeader {
+  display: flex;
+  align-items: center;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--auth-secondary-text);
+}
+
+.requirementInfoIcon {
+  margin-right: 0.5rem;
+  color: var(--auth-primary);
+}
+
+.passwordRequirements {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--auth-input-bg);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.requirementMet, 
+.requirementNotMet {
+  display: flex;
+  align-items: center;
+}
+
+.requirementMet {
+  color: #22c55e;
+}
+
+.requirementNotMet {
+  color: var(--auth-secondary-text);
+}
+
+.requirementIcon {
+  margin-right: 0.5rem;
+  width: 1rem;
+}
+
+/* Password strength meter */
+.passwordStrength {
+  margin-top: 0.5rem;
+}
+
+.strengthMeter {
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  margin-bottom: 0.25rem;
+}
+
+.strengthIndicator {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.weak {
+  background-color: #ef4444;
+}
+
+.medium {
+  background-color: #f59e0b;
+}
+
+.strong {
+  background-color: #22c55e;
+}
+
+.very-strong {
+  background-color: #10b981;
+  background-image: linear-gradient(90deg, #10b981, #22c55e);
+}
+
+.strengthText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Loading indicator */
+.loadingIcon {
+  margin-right: 0.5rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Make submit button look better when disabled */
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 } 

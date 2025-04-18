@@ -49,6 +49,59 @@ const AlertMessage = styled.div`
     type === 'error' ? theme.colors.error : theme.colors.success};
 `;
 
+const RoleToggleContainer = styled.div`
+  display: flex;
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const RoleToggleButton = styled.button`
+  flex: 1;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background-color: ${({ isActive, theme }) => 
+    isActive ? theme.colors.primary : 'transparent'};
+  color: ${({ isActive, theme }) => 
+    isActive ? theme.colors.white : theme.colors.text};
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: ${({ isActive }) => isActive ? 'bold' : 'normal'};
+  
+  &:hover {
+    background-color: ${({ isActive, theme }) => 
+      isActive ? theme.colors.primary : theme.colors.background};
+  }
+`;
+
+const AdminCredentialsHint = styled.div`
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm};
+  background-color: rgba(40, 167, 69, 0.1);
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  border: 1px dashed ${({ theme }) => theme.colors.primary};
+
+  p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+  }
+`;
+
+const ForgotPasswordLink = styled(Link)`
+  display: block;
+  text-align: right;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors.primary};
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+    color: ${({ theme }) => theme.colors.primaryDark};
+  }
+`;
+
 // Login page component
 const Login = () => {
   const navigate = useNavigate();
@@ -56,7 +109,7 @@ const Login = () => {
   
   // Form state
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   
@@ -64,6 +117,7 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(false);
   
   // Handle input change
   const handleChange = (e) => {
@@ -73,11 +127,27 @@ const Login = () => {
       [name]: value
     });
     
-    // Validate field on change
-    const error = validateField(name, value);
-    setErrors({
-      ...errors,
-      [name]: error
+    // Clear errors when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+    if (generalError) {
+      setGeneralError('');
+    }
+  };
+  
+  // Toggle between user and admin login modes
+  const toggleAdminMode = (adminMode) => {
+    setIsAdminMode(adminMode);
+    setErrors({});
+    setGeneralError('');
+    // Clear form data when switching modes
+    setFormData({
+      username: '',
+      password: '',
     });
   };
   
@@ -85,19 +155,25 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate all fields
-    const emailError = validateField('email', formData.email);
-    const passwordError = validateField('password', formData.password);
+    // Validate based on login mode
+    let hasErrors = false;
+    const newErrors = {};
     
-    const newErrors = {
-      email: emailError,
-      password: passwordError
-    };
+    // Username validation for both modes
+    if (!formData.username) {
+      newErrors.username = 'Username is required';
+      hasErrors = true;
+    }
+    
+    // Password validation for both modes
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+      hasErrors = true;
+    }
     
     setErrors(newErrors);
     
-    // Check if there are any errors
-    if (emailError || passwordError) {
+    if (hasErrors) {
       return;
     }
     
@@ -105,17 +181,33 @@ const Login = () => {
       setIsSubmitting(true);
       setGeneralError('');
       
-      const result = await login({
-        email: formData.email,
-        password: formData.password
+      console.log('Submitting login form:', {
+        username: formData.username,
+        password: formData.password.replace(/./g, '*'), // Mask password for security
+        mode: isAdminMode ? 'admin' : 'user'
       });
       
+      // Include role in login credentials
+      const loginData = {
+        ...formData,
+        role: isAdminMode ? 'admin' : 'user'
+      };
+      
+      const result = await login(loginData);
+      console.log('Login result:', result);
+      
       if (result.success) {
-        navigate('/');
+        // Redirect based on role
+        if (isAdminMode || result.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/user/dashboard');
+        }
       } else {
-        setGeneralError(result.message || 'Login failed. Please try again.');
+        setGeneralError(result.message || 'Login failed. Please check your credentials and try again.');
       }
     } catch (error) {
+      console.error('Login error:', error);
       setGeneralError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -126,7 +218,22 @@ const Login = () => {
     <Layout>
       <LoginContainer>
         <FormContainer>
-          <FormTitle>Login</FormTitle>
+          <FormTitle>{isAdminMode ? 'Admin Login' : 'User Login'}</FormTitle>
+          
+          <RoleToggleContainer>
+            <RoleToggleButton 
+              isActive={!isAdminMode} 
+              onClick={() => toggleAdminMode(false)}
+            >
+              User
+            </RoleToggleButton>
+            <RoleToggleButton 
+              isActive={isAdminMode} 
+              onClick={() => toggleAdminMode(true)}
+            >
+              Admin
+            </RoleToggleButton>
+          </RoleToggleContainer>
           
           {generalError && (
             <AlertMessage type="error">{generalError}</AlertMessage>
@@ -134,18 +241,19 @@ const Login = () => {
           
           <Form onSubmit={handleSubmit}>
             <FormGroup>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">
+                {isAdminMode ? 'Username' : 'Email or Username'}
+              </Label>
               <Input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+                type={isAdminMode ? "text" : "text"}
+                id="username"
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
-                error={errors.email}
-                placeholder="Enter your email"
-                autoComplete="email"
+                error={errors.username}
+                placeholder={isAdminMode ? "Enter admin username" : "Enter your email or username"}
               />
-              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+              {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
             </FormGroup>
             
             <FormGroup>
@@ -163,14 +271,34 @@ const Login = () => {
               {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
             </FormGroup>
             
+            {!isAdminMode && (
+              <ForgotPasswordLink to="/forgot-password">
+                Forgot password?
+              </ForgotPasswordLink>
+            )}
+            
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Logging in...' : 'Login'}
+              {isSubmitting ? 'Logging in...' : (isAdminMode ? 'Admin Login' : 'Login')}
             </Button>
           </Form>
           
-          <LinkText>
-            Don't have an account? <Link to="/signup">Sign up here</Link>
-          </LinkText>
+          {isAdminMode ? (
+            <AdminCredentialsHint>
+              <p><strong>Admin credentials:</strong></p>
+              <p>Username: admin</p>
+              <p>Email: admin@gmail.com</p>
+              <p>Password: Admin@123</p>
+            </AdminCredentialsHint>
+          ) : (
+            <>
+              <LinkText>
+                Don't have an account? <Link to="/signup">Sign up here</Link>
+              </LinkText>
+              <small style={{ display: 'block', marginTop: '10px', color: '#666', textAlign: 'center' }}>
+                For user login, enter your registered email address in the username field.
+              </small>
+            </>
+          )}
         </FormContainer>
       </LoginContainer>
     </Layout>

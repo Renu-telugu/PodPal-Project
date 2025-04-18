@@ -10,12 +10,18 @@ dotenv.config();
 
 const app = express();
 
+// More permissive CORS to allow requests from any origin during development
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow requests only from the React frontend
+    origin: "*", // Allow all origins in development
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
-app.use(express.json());
+
+// Increase JSON payload limit for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static file serving for uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -25,9 +31,18 @@ app.use("/api/auth", authRoutes);
 app.use("/api/podcasts", podcastUploadRoutes);
 app.use("/api/channel", channelRoutes);
 
-// Root route
+// Root route with more detailed health check
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.json({
+    status: "API is running",
+    serverTime: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      auth: "/api/auth/",
+      podcasts: "/api/podcasts/",
+      channel: "/api/channel/"
+    }
+  });
 });
 
 // Comprehensive error handling middleware
@@ -67,7 +82,9 @@ mongoose
   })
   .catch((err) => {
     console.error("MongoDB Connection Error:", err);
+    console.error("Please make sure MongoDB is running and accessible");
   });
+
 // Ensure uploads directory exists
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "uploads", "podcasts", "audio");
@@ -85,4 +102,5 @@ if (!fs.existsSync(coversDir)) {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}`);
 });

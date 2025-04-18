@@ -1,7 +1,9 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import Dashboard from "../Layout/Dashboard";
 import UserHome from "./UserHome";
+import BrowsePodcasts from "./BrowsePodcasts";
+import MyPodcasts from "./MyPodcasts";
 import UploadPodcast from "../../pages/UploadPodcast";
 import Profile from "../../pages/Profile";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +17,7 @@ import {
   faUser,
   faCog,
   faCreditCard,
+  faCompass
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./UserDashboard.module.css";
 
@@ -36,24 +39,10 @@ const SampleContent = ({ title, description }) => (
   </div>
 );
 
-const BrowsePodcasts = () => (
-  <SampleContent
-    title="Browse Podcasts"
-    description="Discover new podcasts across various categories. Filter by genre, popularity, or release date."
-  />
-);
-
 const MyLibrary = () => (
   <SampleContent
     title="My Library"
     description="Access your saved podcasts, favorite episodes, and custom playlists."
-  />
-);
-
-const MyPodcasts = () => (
-  <SampleContent
-    title="My Podcasts"
-    description="Manage your uploaded podcasts, view analytics, and edit podcast information."
   />
 );
 
@@ -94,9 +83,9 @@ const UserDashboard = () => {
           icon: <FontAwesomeIcon icon={faHome} />,
         },
         {
-          label: "Browse Podcasts",
+          label: "Explore Podcasts",
           path: "/user/browse",
-          icon: <FontAwesomeIcon icon={faSearch} />,
+          icon: <FontAwesomeIcon icon={faSearch} style={{ color: 'inherit' }} />,
         },
         {
           label: "My Library",
@@ -142,7 +131,7 @@ const UserDashboard = () => {
           label: "Subscription",
           path: "/user/subscription",
           icon: <FontAwesomeIcon icon={faCreditCard} />,
-        },
+        }
       ],
     },
   ];

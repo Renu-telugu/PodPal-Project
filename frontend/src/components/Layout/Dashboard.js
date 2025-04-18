@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, NavLink } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faHeadphones, 
@@ -13,6 +14,7 @@ import {
   faToggleOn,
   faToggleOff
 } from '@fortawesome/free-solid-svg-icons';
+import styled from 'styled-components';
 
 /**
  * Dashboard Layout Component
@@ -27,9 +29,17 @@ import {
 const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // Use ThemeContext instead of local state
+  const { theme, toggleTheme, isDarkMode } = useTheme();
+  
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  
+  // Log theme changes for debugging
+  useEffect(() => {
+    console.log('Current theme in Dashboard:', theme, 'isDarkMode:', isDarkMode);
+  }, [theme, isDarkMode]);
   
   const toggleSidebar = () => {
     setSidebarCollapsed(!isSidebarCollapsed);
@@ -37,12 +47,6 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
   
   const toggleMobileSidebar = () => {
     setMobileSidebarOpen(!isMobileSidebarOpen);
-  };
-  
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    // Add actual dark mode implementation here if needed
-    document.body.classList.toggle('darkMode');
   };
   
   // Group menu items by section
@@ -59,6 +63,16 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
   const handleLogout = () => {
     logout();
     navigate('/'); // Redirect to home page
+  };
+  
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (!user || !user.name) return '?';
+    
+    const nameParts = user.name.split(' ');
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
   
   return (
@@ -102,20 +116,38 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
               <ul className={styles.menuList}>
                 {items.map((item, index) => (
                   <li key={index} className={styles.menuItem}>
-                    <Link
-                      to={item.path}
-                      className={styles.menuLink}
-                      title={isSidebarCollapsed ? item.label : ''}
-                    >
-                      <span className={styles.menuIcon}>
-                        {typeof item.icon === 'string' 
-                          ? <FontAwesomeIcon icon={item.icon} /> 
-                          : item.icon}
-                      </span>
-                      {!isSidebarCollapsed && (
-                        <span className={styles.menuLabel}>{item.label}</span>
-                      )}
-                    </Link>
+                    {item.isExternal ? (
+                      <Link
+                        to={item.path}
+                        className={styles.menuLink}
+                        title={isSidebarCollapsed ? item.label : ''}
+                      >
+                        <span className={styles.menuIcon}>
+                          {typeof item.icon === 'string' 
+                            ? <FontAwesomeIcon icon={item.icon} /> 
+                            : item.icon}
+                        </span>
+                        {!isSidebarCollapsed && (
+                          <span className={styles.menuLabel}>{item.label}</span>
+                        )}
+                      </Link>
+                    ) : (
+                      <NavLink
+                        to={item.path}
+                        end
+                        className={({ isActive }) => isActive ? styles.activeMenuLink : styles.menuLink}
+                        title={isSidebarCollapsed ? item.label : ''}
+                      >
+                        <span className={styles.menuIcon}>
+                          {typeof item.icon === 'string' 
+                            ? <FontAwesomeIcon icon={item.icon} /> 
+                            : item.icon}
+                        </span>
+                        {!isSidebarCollapsed && (
+                          <span className={styles.menuLabel}>{item.label}</span>
+                        )}
+                      </NavLink>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -127,7 +159,7 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
           {!isSidebarCollapsed && (
             <div className={styles.userInfo}>
               <div className={styles.userAvatar}>
-                <FontAwesomeIcon icon={faUser} />
+                {getInitials()}
               </div>
               <div>
                 <div className={styles.userName}>{user?.name || 'User'}</div>
@@ -138,7 +170,7 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
           
           <button 
             className={styles.themeToggle}
-            onClick={toggleDarkMode}
+            onClick={toggleTheme}
             title="Toggle dark mode"
           >
             <FontAwesomeIcon icon={isDarkMode ? faToggleOn : faToggleOff} />
@@ -172,7 +204,7 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
           <div className={styles.headerControls}>
             <button 
               className={styles.themeToggleHeader}
-              onClick={toggleDarkMode}
+              onClick={toggleTheme}
               title="Toggle dark mode"
             >
               <FontAwesomeIcon icon={isDarkMode ? faToggleOn : faToggleOff} />

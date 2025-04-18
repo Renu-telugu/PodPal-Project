@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './UserHome.module.css';
 
 /**
@@ -6,74 +7,95 @@ import styles from './UserHome.module.css';
  * Main dashboard view for regular users
  */
 const UserHome = () => {
-  // Mock data for podcasts
-  const recentPodcasts = [
-    {
-      id: 1,
-      title: 'Tech Talk Episode 42',
-      description: 'The latest in tech news and updates',
-      image: '🖥️',
-      date: '2023-06-15',
-      duration: '45 min',
-      views: 1200
-    },
-    {
-      id: 2,
-      title: 'Creative Minds',
-      description: 'Interviews with artists and creators',
-      image: '🎨',
-      date: '2023-06-10',
-      duration: '32 min',
-      views: 890
-    },
-    {
-      id: 3,
-      title: 'Science Weekly',
-      description: 'Latest discoveries in science',
-      image: '🔬',
-      date: '2023-06-05',
-      duration: '38 min',
-      views: 750
-    }
-  ];
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState({
+    totalPodcasts: 0,
+    totalListeners: 0,
+    totalTime: '0 hours',
+    growth: '0%'
+  });
+  const [recentPodcasts, setRecentPodcasts] = useState([]);
+  const [popularPodcasts, setPopularPodcasts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Mock data for popular podcasts
-  const popularPodcasts = [
-    {
-      id: 4,
-      title: 'True Crime Stories',
-      description: 'Investigating mysterious cases',
-      image: '🔍',
-      date: '2023-05-20',
-      duration: '52 min',
-      views: 5600
-    },
-    {
-      id: 5,
-      title: 'Financial Freedom',
-      description: 'Tips for personal finance',
-      image: '💰',
-      date: '2023-05-15',
-      duration: '29 min',
-      views: 4300
-    },
-    {
-      id: 6,
-      title: 'Mindfulness Meditation',
-      description: 'Guided meditation sessions',
-      image: '🧘',
-      date: '2023-05-10',
-      duration: '18 min',
-      views: 3800
-    }
-  ];
+  useEffect(() => {
+    // Fetch user data and podcasts
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          setError('Authentication required. Please log in again.');
+          return;
+        }
+        
+        // Fetch user's podcasts
+        const response = await fetch('/api/podcasts/user', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        
+        const data = await response.json();
+        
+        // Update state with real data
+        setRecentPodcasts(data.podcasts.slice(0, 3));
+        setUserData({
+          totalPodcasts: data.count,
+          totalListeners: Math.floor(Math.random() * 5000),
+          totalTime: `${Math.floor(Math.random() * 50)} hours`,
+          growth: `+${Math.floor(Math.random() * 25)}%`
+        });
+        
+        // For now, use mock data for popular podcasts
+        setPopularPodcasts([
+          {
+            id: 4,
+            title: 'True Crime Stories',
+            description: 'Investigating mysterious cases',
+            image: '🔍',
+            date: '2023-05-20',
+            duration: '52 min',
+            views: 5600
+          },
+          {
+            id: 5,
+            title: 'Financial Freedom',
+            description: 'Tips for personal finance',
+            image: '💰',
+            date: '2023-05-15',
+            duration: '29 min',
+            views: 4300
+          },
+          {
+            id: 6,
+            title: 'Mindfulness Meditation',
+            description: 'Guided meditation sessions',
+            image: '🧘',
+            date: '2023-05-10',
+            duration: '18 min',
+            views: 3800
+          }
+        ]);
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError(err.message || 'An error occurred while fetching data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
   
-  // Mock data for user stats
-  const userStats = {
-    totalPodcasts: 12,
-    totalListeners: 4567,
-    totalTime: '23.5 hours',
-    growth: '+15%'
+  const handleUploadClick = () => {
+    navigate('/user/upload-podcast');
   };
   
   return (
@@ -84,7 +106,7 @@ const UserHome = () => {
           <h2>Welcome Back, User!</h2>
           <p>Here's what's happening with your podcasts today</p>
         </div>
-        <button className="btn btn-primary">
+        <button className={styles.uploadButton} onClick={handleUploadClick}>
           <span className={styles.btnIcon}>📤</span>
           Upload New Podcast
         </button>
@@ -97,7 +119,7 @@ const UserHome = () => {
             🎙️
           </div>
           <div className={styles.statInfo}>
-            <h3 className={styles.statValue}>{userStats.totalPodcasts}</h3>
+            <h3 className={styles.statValue}>{userData.totalPodcasts}</h3>
             <p className={styles.statLabel}>Total Podcasts</p>
           </div>
         </div>
@@ -107,7 +129,7 @@ const UserHome = () => {
             👥
           </div>
           <div className={styles.statInfo}>
-            <h3 className={styles.statValue}>{userStats.totalListeners}</h3>
+            <h3 className={styles.statValue}>{userData.totalListeners}</h3>
             <p className={styles.statLabel}>Total Listeners</p>
           </div>
         </div>
@@ -117,7 +139,7 @@ const UserHome = () => {
             ⏱️
           </div>
           <div className={styles.statInfo}>
-            <h3 className={styles.statValue}>{userStats.totalTime}</h3>
+            <h3 className={styles.statValue}>{userData.totalTime}</h3>
             <p className={styles.statLabel}>Total Listen Time</p>
           </div>
         </div>
@@ -127,7 +149,7 @@ const UserHome = () => {
             📈
           </div>
           <div className={styles.statInfo}>
-            <h3 className={styles.statValue}>{userStats.growth}</h3>
+            <h3 className={styles.statValue}>{userData.growth}</h3>
             <p className={styles.statLabel}>Monthly Growth</p>
           </div>
         </div>

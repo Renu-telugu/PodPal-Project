@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./Signup.module.css";
 import { useAuth } from "../../context/AuthContext";
@@ -10,6 +10,8 @@ import {
   faCheck,
   faTimes,
   faHeadphones,
+  faCircleInfo,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 
 /**
@@ -41,6 +43,22 @@ const Signup = () => {
   // Form validation and UI state
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverResponse, setServerResponse] = useState(null);
+
+  // Fetch password requirements from the server on component mount
+  useEffect(() => {
+    const fetchPasswordRequirements = async () => {
+      try {
+        const response = await fetch('/api/auth/password-requirements');
+        const data = await response.json();
+        console.log('Password requirements:', data);
+      } catch (error) {
+        console.error('Failed to fetch password requirements:', error);
+      }
+    };
+
+    fetchPasswordRequirements();
+  }, []);
 
   /**
    * Handle input change for form fields
@@ -61,6 +79,11 @@ const Signup = () => {
       }));
     }
 
+    // Reset server errors when user makes changes
+    if (serverResponse) {
+      setServerResponse(null);
+    }
+
     // Check password strength when password field changes
     if (name === "password") {
       checkPasswordStrength(value);
@@ -77,12 +100,13 @@ const Signup = () => {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    // Calculate score (0-4)
+    // Calculate score (0-5)
     let score = 0;
     if (hasMinLength) score++;
-    if (hasUppercase && hasLowercase) score++;
+    if (hasUppercase) score++;
+    if (hasLowercase) score++;
     if (hasNumber) score++;
     if (hasSpecialChar) score++;
 
@@ -98,13 +122,14 @@ const Signup = () => {
 
   /**
    * Get password strength level based on score
-   * @returns {string} - Strength level (weak, medium, strong)
+   * @returns {string} - Strength level (weak, medium, strong, very-strong)
    */
   const getPasswordStrengthLevel = () => {
     const { score } = passwordStrength;
-    if (score <= 1) return "weak";
+    if (score <= 2) return "weak";
     if (score <= 3) return "medium";
-    return "strong";
+    if (score <= 4) return "strong";
+    return "very-strong";
   };
 
   /**
@@ -133,7 +158,7 @@ const Signup = () => {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
-    } else if (passwordStrength.score < 2) {
+    } else if (passwordStrength.score < 3) {
       newErrors.password = "Password is too weak";
     }
 
@@ -154,6 +179,14 @@ const Signup = () => {
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setServerResponse(null);
 
     const signupData = {
       name: formData.name,
@@ -169,15 +202,43 @@ const Signup = () => {
       console.log("Signup Result:", result);
 
       if (result.success) {
-        localStorage.setItem("user", JSON.stringify(result.user));
-        navigate("/user/dashboard");
+        setServerResponse({
+          type: 'success',
+          message: result.message || 'Account created successfully!'
+        });
+        
+        // Delay navigation to show success message
+        setTimeout(() => {
+          navigate("/user/dashboard");
+        }, 1500);
       } else {
         console.error("Signup Failed:", result.message);
-        setErrors({ general: result.message || "Failed to create account" });
+        setServerResponse({
+          type: 'error',
+          message: result.message || 'Failed to create account'
+        });
+        
+        // If server sent back specific password requirements issues
+        if (result.passwordRequirements) {
+          const { passwordRequirements } = result;
+          
+          setPasswordStrength(prev => ({
+            ...prev,
+            hasUppercase: passwordRequirements.uppercase,
+            hasLowercase: passwordRequirements.lowercase,
+            hasNumber: passwordRequirements.number,
+            hasSpecialChar: passwordRequirements.special
+          }));
+        }
       }
     } catch (error) {
       console.error("Signup Error:", error);
-      setErrors({ general: "An unexpected error occurred" });
+      setServerResponse({
+        type: 'error',
+        message: 'An unexpected error occurred'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -192,8 +253,16 @@ const Signup = () => {
           <p className={styles.authSubtitle}>Create Your Account</p>
         </div>
 
-        {errors.general && (
-          <div className={styles.errorMessage}>{errors.general}</div>
+        {serverResponse && (
+          <div 
+            className={`${styles.serverMessage} ${
+              serverResponse.type === 'error' 
+                ? styles.errorMessage 
+                : styles.successMessage
+            }`}
+          >
+            {serverResponse.message}
+          </div>
         )}
 
         <form className={styles.authForm} onSubmit={handleSubmit}>
@@ -212,6 +281,7 @@ const Signup = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Enter your full name"
+              disabled={isSubmitting}
             />
             {errors.name && (
               <div className={styles.fieldError}>{errors.name}</div>
@@ -233,6 +303,7 @@ const Signup = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
+              disabled={isSubmitting}
             />
             {errors.email && (
               <div className={styles.fieldError}>{errors.email}</div>
@@ -254,6 +325,7 @@ const Signup = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Create a password"
+              disabled={isSubmitting}
             />
             {errors.password && (
               <div className={styles.fieldError}>{errors.password}</div>
@@ -267,80 +339,90 @@ const Signup = () => {
                     className={`${styles.strengthIndicator} ${
                       styles[getPasswordStrengthLevel()]
                     }`}
-                    style={{ width: `${(passwordStrength.score / 4) * 100}%` }}
+                    style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
                   ></div>
                 </div>
                 <span className={styles.strengthText}>
                   {getPasswordStrengthLevel() === "weak" && "Weak"}
                   {getPasswordStrengthLevel() === "medium" && "Medium"}
                   {getPasswordStrengthLevel() === "strong" && "Strong"}
+                  {getPasswordStrengthLevel() === "very-strong" && "Very Strong"}
                 </span>
               </div>
             )}
 
             {/* Password requirements */}
-            {formData.password && (
-              <div className={styles.passwordRequirements}>
-                <div
-                  className={
-                    passwordStrength.hasMinLength
-                      ? styles.requirementMet
-                      : styles.requirementNotMet
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={passwordStrength.hasMinLength ? faCheck : faTimes}
-                    className={styles.requirementIcon}
-                  />
-                  <span>At least 8 characters</span>
-                </div>
-                <div
-                  className={
-                    passwordStrength.hasUppercase &&
-                    passwordStrength.hasLowercase
-                      ? styles.requirementMet
-                      : styles.requirementNotMet
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={
-                      passwordStrength.hasUppercase &&
-                      passwordStrength.hasLowercase
-                        ? faCheck
-                        : faTimes
-                    }
-                    className={styles.requirementIcon}
-                  />
-                  <span>Upper & lowercase letters</span>
-                </div>
-                <div
-                  className={
-                    passwordStrength.hasNumber
-                      ? styles.requirementMet
-                      : styles.requirementNotMet
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={passwordStrength.hasNumber ? faCheck : faTimes}
-                    className={styles.requirementIcon}
-                  />
-                  <span>At least 1 number</span>
-                </div>
-                <div
-                  className={
-                    passwordStrength.hasSpecialChar
-                      ? styles.requirementMet
-                      : styles.requirementNotMet
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={passwordStrength.hasSpecialChar ? faCheck : faTimes}
-                    className={styles.requirementIcon}
-                  />
-                  <span>At least 1 special character</span>
-                </div>
+            <div className={styles.passwordRequirementsHeader}>
+              <FontAwesomeIcon icon={faCircleInfo} className={styles.requirementInfoIcon} />
+              <span>Password must have:</span>
+            </div>
+            <div className={styles.passwordRequirements}>
+              <div
+                className={
+                  passwordStrength.hasMinLength
+                    ? styles.requirementMet
+                    : styles.requirementNotMet
+                }
+              >
+                <FontAwesomeIcon
+                  icon={passwordStrength.hasMinLength ? faCheck : faTimes}
+                  className={styles.requirementIcon}
+                />
+                <span>At least 8 characters</span>
               </div>
-            )}
+              <div
+                className={
+                  passwordStrength.hasUppercase
+                    ? styles.requirementMet
+                    : styles.requirementNotMet
+                }
+              >
+                <FontAwesomeIcon
+                  icon={passwordStrength.hasUppercase ? faCheck : faTimes}
+                  className={styles.requirementIcon}
+                />
+                <span>Uppercase letter (A-Z)</span>
+              </div>
+              <div
+                className={
+                  passwordStrength.hasLowercase
+                    ? styles.requirementMet
+                    : styles.requirementNotMet
+                }
+              >
+                <FontAwesomeIcon
+                  icon={passwordStrength.hasLowercase ? faCheck : faTimes}
+                  className={styles.requirementIcon}
+                />
+                <span>Lowercase letter (a-z)</span>
+              </div>
+              <div
+                className={
+                  passwordStrength.hasNumber
+                    ? styles.requirementMet
+                    : styles.requirementNotMet
+                }
+              >
+                <FontAwesomeIcon
+                  icon={passwordStrength.hasNumber ? faCheck : faTimes}
+                  className={styles.requirementIcon}
+                />
+                <span>At least 1 number (0-9)</span>
+              </div>
+              <div
+                className={
+                  passwordStrength.hasSpecialChar
+                    ? styles.requirementMet
+                    : styles.requirementNotMet
+                }
+              >
+                <FontAwesomeIcon
+                  icon={passwordStrength.hasSpecialChar ? faCheck : faTimes}
+                  className={styles.requirementIcon}
+                />
+                <span>At least 1 special character (!@#$...)</span>
+              </div>
+            </div>
           </div>
 
           <div className={styles.formGroup}>
@@ -358,6 +440,7 @@ const Signup = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="Confirm your password"
+              disabled={isSubmitting}
             />
             {errors.confirmPassword && (
               <div className={styles.fieldError}>{errors.confirmPassword}</div>
@@ -369,7 +452,14 @@ const Signup = () => {
             className={styles.submitButton}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating Account..." : "Create Account"}
+            {isSubmitting ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} spin className={styles.loadingIcon} />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
           </button>
         </form>
 

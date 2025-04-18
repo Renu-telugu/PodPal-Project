@@ -20,7 +20,10 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, "Please provide a password"],
+    required: function() {
+      // Only require password for regular users, not for mock or emergency users
+      return !this.mockId;
+    },
     minlength: [6, "Password must be at least 6 characters"],
     select: false,
   },
@@ -28,6 +31,16 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "admin"],
     default: "user",
+  },
+  podcasts: [{
+    type: mongoose.Schema.ObjectId,
+    ref: "Podcast"
+  }],
+  // Add mockId for frontend mock users
+  mockId: {
+    type: String,
+    unique: true,
+    sparse: true, // Only enforce uniqueness if the field exists
   },
   createdAt: {
     type: Date,
@@ -40,9 +53,22 @@ UserSchema.pre("save", async function (next) {
   console.log("Pre-save hook called:", {
     email: this.email,
     isModified: this.isModified("password"),
+    hasMockId: !!this.mockId
   });
 
+  // If mockId exists, we don't need to hash the password
+  if (this.mockId) {
+    console.log("Skipping password hashing for mock user:", this.mockId);
+    return next();
+  }
+
   if (!this.isModified("password")) {
+    return next();
+  }
+
+  // Only hash the password if it exists
+  if (!this.password) {
+    console.log("No password to hash");
     return next();
   }
 
