@@ -1,13 +1,13 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import axios from "axios";
 
 // API base URL
-const API_URL = '/api/auth';
+const API_URL = "/api/auth";
 
 // Admin credentials - fixed credentials as requested
 const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin@gmail.com'
+  username: "admin",
+  password: "admin@gmail.com",
 };
 
 // Create context
@@ -19,241 +19,216 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load user from localStorage on initial render
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    
-    // If using this app without a backend temporarily, this is a fallback
-    // to ensure role-based routes still work
-    if (!storedUser && localStorage.getItem('userRole')) {
-      setUser({
-        role: localStorage.getItem('userRole'),
-        name: 'Test User'
+  // Method to get the current authentication token
+  const getToken = () => {
+    // Comprehensive logging of all authentication-related items
+    console.log("Token Retrieval Debug:", {
+      localStorageEntries: Object.keys(localStorage).filter(
+        (key) =>
+          key.includes("token") || key.includes("auth") || key.includes("user")
+      ),
+      localStorageTokens: {
+        token: localStorage.getItem("token"),
+        authToken: localStorage.getItem("authToken"),
+        userToken: localStorage.getItem("userToken"),
+      },
+      sessionStorageTokens: {
+        token: sessionStorage.getItem("token"),
+        authToken: sessionStorage.getItem("authToken"),
+        userToken: sessionStorage.getItem("userToken"),
+      },
+      currentUser: localStorage.getItem("user"),
+      isAuthenticated: localStorage.getItem("isAuthenticated"),
+    });
+
+    // Check multiple storage locations with fallback
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("authToken") ||
+      sessionStorage.getItem("authToken") ||
+      "";
+
+    // Additional validation and logging
+    if (!token) {
+      console.warn("No token found in any storage location", {
+        user: localStorage.getItem("user"),
+        userRole: localStorage.getItem("userRole"),
+        isAuthenticated: localStorage.getItem("isAuthenticated"),
       });
     }
-    
+
+    return token;
+  };
+
+  // Verify and set token
+  const setTokenInStorage = (token, user) => {
+    try {
+      // Log all current storage contents before modification
+      console.warn("BEFORE Token Storage - Full Storage Dump:", {
+        localStorageKeys: Object.keys(localStorage),
+        sessionStorageKeys: Object.keys(sessionStorage),
+        localStorageContents: { ...localStorage },
+        sessionStorageContents: { ...sessionStorage },
+      });
+
+      // Forcefully set token in multiple locations
+      if (token) {
+        // Aggressive token removal
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+
+        // Set tokens using both window and global localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("userToken", token);
+
+        window.localStorage.setItem("token", token);
+        window.localStorage.setItem("authToken", token);
+        window.localStorage.setItem("userToken", token);
+
+        // Set user details
+        const userString = JSON.stringify(user);
+        localStorage.setItem("user", userString);
+        localStorage.setItem("userRole", user.role);
+        localStorage.setItem("isAuthenticated", "true");
+
+        window.localStorage.setItem("user", userString);
+        window.localStorage.setItem("userRole", user.role);
+        window.localStorage.setItem("isAuthenticated", "true");
+
+        // Log after storage
+        console.warn("AFTER Token Storage - Verification:", {
+          localStorageToken: localStorage.getItem("token"),
+          windowLocalStorageToken: window.localStorage.getItem("token"),
+          storedUser: localStorage.getItem("user"),
+          userRole: localStorage.getItem("userRole"),
+          isAuthenticated: localStorage.getItem("isAuthenticated"),
+        });
+
+        // Additional browser console logging
+        console.log("Token Set:", token);
+        console.log("User:", user);
+
+        return true;
+      } else {
+        console.error("No token provided to set in storage");
+        return false;
+      }
+    } catch (error) {
+      console.error("CRITICAL: Error setting token in storage:", {
+        errorMessage: error.message,
+        errorStack: error.stack,
+      });
+      return false;
+    }
+  };
+
+  // Load user from localStorage on initial render
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        // If user data is corrupted, clear it
+        localStorage.removeItem("user");
+        setUser(null);
+      }
+    } else if (localStorage.getItem("userRole")) {
+      setUser({
+        role: localStorage.getItem("userRole"),
+        name: "Test User",
+      });
+    } else {
+      setUser(null);
+    }
     setLoading(false);
   }, []);
 
   // Register a new user
-  const signup = async (userData) => {
+  const signup = async (signupData) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Role verification - only allow user role for signup
-      if (userData.role === 'admin') {
-        return { 
-          success: false, 
-          message: 'Admin registration is not allowed. Please contact system administrator.' 
-        };
-      }
-      
-      // Check if user already exists (for development without backend)
-      if (process.env.NODE_ENV === 'development' && !process.env.REACT_APP_USE_BACKEND) {
-        // Simulate checking for existing user
-        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const userExists = existingUsers.some(user => user.email === userData.email);
-        
-        if (userExists) {
-          return {
-            success: false,
-            message: 'User with this email already exists. Please login instead.'
-          };
-        }
-        
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Create a user object with role
-        const mockUser = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: userData.name || 'User',
-          email: userData.email,
-          role: 'user', // Force user role for signup
-          createdAt: new Date().toISOString()
-        };
-        
-        // Store the mock user in our "database"
-        existingUsers.push(mockUser);
-        localStorage.setItem('users', JSON.stringify(existingUsers));
-        
-        // Store the mock data for current session
-        localStorage.setItem('userRole', mockUser.role);
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        
-        setUser(mockUser);
-        return { success: true };
-      }
-      
-      // Real API call
-      const response = await axios.post(`${API_URL}/signup`, userData);
-      
+      const response = await axios.post(`${API_URL}/signup`, signupData);
       if (response.data.success) {
         const { token, user } = response.data;
-        
-        // Save user, role and token to localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('userRole', user.role);
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Set user in state
+
+        // Store token and user details, including role
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("userRole", user.role); // Store role in localStorage
+        localStorage.setItem("isAuthenticated", "true");
+
         setUser(user);
         return { success: true };
+      } else {
+        return { success: false, message: response.data.message };
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || 
-        'Registration failed. Please try again.'
-      );
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
+      console.error("Signup Error:", error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Signup failed",
       };
-    } finally {
-      setLoading(false);
     }
   };
 
   // Log in user
-  const login = async (credentials) => {
+  const login = async (loginData) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Admin role verification with fixed credentials
-      if (credentials.role === 'admin') {
-        // Check if admin credentials match the hardcoded values
-        const isValidAdmin = 
-          credentials.username === ADMIN_CREDENTIALS.username && 
-          credentials.password === ADMIN_CREDENTIALS.password;
-        
-        if (!isValidAdmin) {
-          return { 
-            success: false, 
-            message: 'Invalid admin credentials. Please check your username and password.' 
-          };
-        }
-      }
-      
-      // While backend is being set up, this simulates the response
-      if (process.env.NODE_ENV === 'development' && !process.env.REACT_APP_USE_BACKEND) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For admin login, verify hardcoded credentials
-        if (credentials.role === 'admin') {
-          const isValidAdmin = 
-            credentials.username === ADMIN_CREDENTIALS.username && 
-            credentials.password === ADMIN_CREDENTIALS.password;
-          
-          if (!isValidAdmin) {
-            return { 
-              success: false, 
-              message: 'Invalid admin credentials. Please check your username and password.' 
-            };
-          }
-          
-          // Create admin user object
-          const adminUser = {
-            id: 'admin-id',
-            name: 'Administrator',
-            username: ADMIN_CREDENTIALS.username,
-            role: 'admin',
-            createdAt: new Date().toISOString()
-          };
-          
-          localStorage.setItem('userRole', adminUser.role);
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('user', JSON.stringify(adminUser));
-          
-          setUser(adminUser);
-          return { success: true, role: 'admin' };
-        }
-        
-        // For regular user login
-        // Check if user exists in our mock database
-        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const user = existingUsers.find(user => user.email === credentials.email);
-        
-        if (!user) {
-          return {
-            success: false,
-            message: 'User not found. Please check your email or sign up.'
-          };
-        }
-        
-        // In a real app, we would verify the password here
-        
-        // Store the user data for current session
-        localStorage.setItem('userRole', user.role);
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        setUser(user);
-        return { success: true, role: user.role };
-      }
-      
-      // Real API call
-      const response = await axios.post(`${API_URL}/login`, credentials);
-      
+      const response = await axios.post(`${API_URL}/login`, loginData);
       if (response.data.success) {
         const { token, user } = response.data;
-        
-        // Save user, role and token to localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('userRole', user.role);
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Set user in state
+
+        // Store token and user details, including role
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("userRole", user.role); // Store role in localStorage
+        localStorage.setItem("isAuthenticated", "true");
+
         setUser(user);
-        return { success: true, role: user.role };
+        return { success: true };
+      } else {
+        return { success: false, message: response.data.message };
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message || 
-        'Login failed. Please check your credentials.'
-      );
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+      console.error("Login Error:", error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Login failed",
       };
-    } finally {
-      setLoading(false);
     }
   };
 
   // Log out user
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("isAuthenticated");
     setUser(null);
-    
+
     // Note: The actual redirection should happen in the component that calls logout
     // We don't use navigate here to avoid circular dependencies
   };
 
   // Check if user is authenticated
   const isAuthenticated = () => {
-    return !!user || localStorage.getItem('isAuthenticated') === 'true';
+    return !!user || localStorage.getItem("isAuthenticated") === "true";
   };
+
+  console.log("Is Authenticated:", isAuthenticated());
 
   // Get user role
   const getUserRole = () => {
-    return user?.role || localStorage.getItem('userRole') || 'user';
+    const role = user?.role || localStorage.getItem("userRole") || "user"; // Default to "user"
+    console.log("Retrieved User Role:", role);
+    return role;
   };
 
   // Create auth header
   const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
@@ -267,21 +242,18 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated,
     getUserRole,
-    getAuthHeader
+    getAuthHeader,
+    getToken,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 // Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-}; 
+};

@@ -39,7 +39,7 @@ const Dashboard = () => {
 
   const handleUpload = () => {
     // Navigate to the upload podcast page
-    navigate('/upload-podcast');
+    navigate('/upload');
   };
 
   return (

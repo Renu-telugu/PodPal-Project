@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import styled from 'styled-components';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import styled from "styled-components";
+import { useAuth } from "../context/AuthContext";
 
 const UploadContainer = styled.div`
   max-width: 600px;
   margin: 2rem auto;
   padding: 2rem;
-  background-color: #282828;
-  color: white;
+  background-color: ${(props) => props.theme.colors.cardBackground};
+  color: ${(props) => props.theme.colors.text};
   border-radius: 8px;
 `;
 
@@ -18,25 +19,35 @@ const FormGroup = styled.div`
 const Input = styled.input`
   width: 100%;
   padding: 0.5rem;
-  background-color: #404040;
-  border: none;
-  color: white;
+  background-color: ${(props) => props.theme.colors.accent};
+  border: 1px solid ${(props) => props.theme.colors.border};
+  color: ${(props) => props.theme.colors.text};
   border-radius: 4px;
   margin-top: 0.5rem;
+`;
+const Textarea = styled.textarea`
+  width: 100%;
+  padding: 0.5rem;
+  background-color: ${(props) => props.theme.colors.accent};
+  border: 1px solid ${(props) => props.theme.colors.border};
+  color: ${(props) => props.theme.colors.text};
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  resize: vertical;
 `;
 
 const Select = styled.select`
   width: 100%;
   padding: 0.5rem;
-  background-color: #404040;
-  border: none;
-  color: white;
+  background-color: ${(props) => props.theme.colors.accent};
+  border: 1px solid ${(props) => props.theme.colors.border};
+  color: ${(props) => props.theme.colors.text};
   border-radius: 4px;
   margin-top: 0.5rem;
 `;
 
 const SubmitButton = styled.button`
-  background-color: #1DB954;
+  background-color: ${(props) => props.theme.colors.primary};
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -44,75 +55,88 @@ const SubmitButton = styled.button`
   cursor: pointer;
   width: 100%;
   margin-top: 1rem;
-  
+
   &:hover {
-    background-color: #1ED760;
+    background-color: ${(props) => props.theme.colors.secondary};
   }
 
   &:disabled {
-    background-color: #666;
+    background-color: ${(props) => props.theme.colors.textLight};
     cursor: not-allowed;
   }
 `;
 
 const ErrorMessage = styled.div`
-  color: #FF4757;
+  color: ${(props) => props.theme.colors.error};
   margin-bottom: 1rem;
 `;
 
 const SuccessMessage = styled.div`
-  color: #1DB954;
+  color: ${(props) => props.theme.colors.success};
   margin-bottom: 1rem;
 `;
 
 const UploadPodcast = () => {
+  const { user } = useAuth();
   const [podcastData, setPodcastData] = useState({
-    title: '',
-    description: '',
-    genre: 'Other',
+    title: "",
+    description: "",
+    genre: "Other",
     audioFile: null,
-    coverImage: null
+    coverImage: null,
+    language: "English",
+    explicit: false,
+    tags: "",
+    publishDate: new Date(),
   });
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    console.log("UploadPodcast Component Mounted");
+    return () => {
+      console.log("UploadPodcast Component Unmounted");
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPodcastData(prev => ({
+    console.log(`Input Changed: ${name} = ${value}`);
+    setPodcastData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    // Clear any previous errors
-    setError('');
+    setError("");
   };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
-    setPodcastData(prev => ({
+    console.log(`File Selected: ${name}`, files[0]);
+    setPodcastData((prev) => ({
       ...prev,
-      [name]: files[0]
+      [name]: files[0],
     }));
-    // Clear any previous errors
-    setError('');
+    setError("");
   };
 
   const validateForm = () => {
+    console.log("Validating Form", podcastData);
     if (!podcastData.title) {
-      setError('Please provide a podcast title');
+      setError("Please provide a podcast title");
       return false;
     }
     if (!podcastData.description) {
-      setError('Please provide a podcast description');
+      setError("Please provide a podcast description");
       return false;
     }
     if (!podcastData.audioFile) {
-      setError('Please upload an audio file');
+      setError("Please upload an audio file");
       return false;
     }
     if (!podcastData.coverImage) {
-      setError('Please upload a cover image');
+      setError("Please upload a cover image");
       return false;
     }
     return true;
@@ -120,52 +144,47 @@ const UploadPodcast = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Reset previous messages
-    setError('');
-    setSuccess('');
 
-    // Validate form
-    if (!validateForm()) {
-      return;
-    }
-
-    // Create FormData for file uploads
     const formData = new FormData();
-    formData.append('title', podcastData.title);
-    formData.append('description', podcastData.description);
-    formData.append('genre', podcastData.genre);
-    formData.append('audioFile', podcastData.audioFile);
-    formData.append('coverImage', podcastData.coverImage);
+    formData.append("title", podcastData.title);
+    formData.append("description", podcastData.description);
+    formData.append("genre", podcastData.genre);
+    formData.append("language", podcastData.language);
+    formData.append("explicit", podcastData.explicit);
+    formData.append("tags", podcastData.tags);
+    formData.append("publishDate", podcastData.publishDate);
+    formData.append("audioFile", podcastData.audioFile);
+    formData.append("coverImage", podcastData.coverImage);
+
+    console.log("FormData:", Object.fromEntries(formData));
 
     try {
-      setIsUploading(true);
-      const response = await axios.post('/api/podcasts/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      // Handle successful upload
-      setSuccess('Podcast uploaded successfully!');
-      
-      // Reset form
-      setPodcastData({
-        title: '',
-        description: '',
-        genre: 'Other',
-        audioFile: null,
-        coverImage: null
-      });
+      const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+      console.log("JWT Token:", localStorage.getItem("token"));
+      if (!token) {
+        throw new Error("No token found. Please log in again.");
+      }
 
-      // Clear file inputs
-      e.target.reset();
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`, // Include the JWT token
+        },
+      };
+
+      const response = await axios.post(
+        "/api/podcasts/upload",
+        formData,
+        config
+      );
+      console.log("Upload Response:", response.data);
+      alert("Podcast uploaded successfully!");
     } catch (error) {
-      // Handle upload error
-      console.error('Upload failed', error);
-      setError(error.response?.data?.message || 'Upload failed. Please try again.');
-    } finally {
-      setIsUploading(false);
+      console.error("Upload Error:", error.response?.data || error.message);
+      alert(
+        error.response?.data?.message ||
+          "Error uploading podcast. Please try again."
+      );
     }
   };
 
@@ -177,9 +196,9 @@ const UploadPodcast = () => {
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <label>Podcast Title</label>
-          <Input 
-            type="text" 
-            name="title" 
+          <Input
+            type="text"
+            name="title"
             value={podcastData.title}
             onChange={handleInputChange}
             placeholder="Enter podcast title"
@@ -188,8 +207,7 @@ const UploadPodcast = () => {
 
         <FormGroup>
           <label>Description</label>
-          <Input 
-            as="textarea" 
+          <Textarea
             name="description"
             value={podcastData.description}
             onChange={handleInputChange}
@@ -200,27 +218,24 @@ const UploadPodcast = () => {
 
         <FormGroup>
           <label>Genre</label>
-          <Select 
+          <Select
             name="genre"
             value={podcastData.genre}
             onChange={handleInputChange}
           >
+            <option value="Other">Other</option>
             <option value="Technology">Technology</option>
             <option value="News">News</option>
             <option value="Comedy">Comedy</option>
             <option value="Education">Education</option>
             <option value="Sports">Sports</option>
-            <option value="Health & Wellness">Health & Wellness</option>
-            <option value="True Crime">True Crime</option>
-            <option value="Business">Business</option>
-            <option value="Other">Other</option>
           </Select>
         </FormGroup>
 
         <FormGroup>
           <label>Audio File</label>
-          <Input 
-            type="file" 
+          <Input
+            type="file"
             name="audioFile"
             accept="audio/*"
             onChange={handleFileChange}
@@ -229,19 +244,57 @@ const UploadPodcast = () => {
 
         <FormGroup>
           <label>Cover Image</label>
-          <Input 
-            type="file" 
+          <Input
+            type="file"
             name="coverImage"
             accept="image/*"
             onChange={handleFileChange}
           />
         </FormGroup>
 
-        <SubmitButton 
-          type="submit" 
-          disabled={isUploading}
-        >
-          {isUploading ? 'Uploading...' : 'Upload Podcast'}
+        <FormGroup>
+          <label>Language</label>
+          <Select
+            name="language"
+            value={podcastData.language}
+            onChange={handleInputChange}
+          >
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+          </Select>
+        </FormGroup>
+
+        <FormGroup>
+          <label>Tags (comma-separated)</label>
+          <Input
+            type="text"
+            name="tags"
+            value={podcastData.tags}
+            onChange={handleInputChange}
+            placeholder="Enter tags separated by commas"
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <label>
+            <Input
+              type="checkbox"
+              name="explicit"
+              checked={podcastData.explicit}
+              onChange={(e) =>
+                setPodcastData((prev) => ({
+                  ...prev,
+                  explicit: e.target.checked,
+                }))
+              }
+            />
+            Explicit Content
+          </label>
+        </FormGroup>
+
+        <SubmitButton type="submit" disabled={isUploading}>
+          {isUploading ? "Uploading..." : "Upload Podcast"}
         </SubmitButton>
       </form>
     </UploadContainer>
