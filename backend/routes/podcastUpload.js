@@ -185,7 +185,12 @@ router.post(
 
       const newPodcast = new Podcast(podcastData);
       await newPodcast.save();
-
+      // Add the podcast to the user's channel
+      const channel = await Channel.findOne({ user: req.user._id });
+      if (channel) {
+        channel.uploads.push(newPodcast._id);
+        await channel.save();
+      }
       res.status(201).json({
         message: "Podcast uploaded successfully",
         podcast: newPodcast,

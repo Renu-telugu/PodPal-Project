@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "../Layout/Dashboard";
 import UserHome from "./UserHome";
 import UploadPodcast from "../../pages/UploadPodcast";
+import Profile from "../../pages/Profile";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -60,13 +61,6 @@ const Drafts = () => (
   <SampleContent
     title="Drafts"
     description="Continue working on your podcast drafts before publishing them."
-  />
-);
-
-const Profile = () => (
-  <SampleContent
-    title="Profile"
-    description="Update your personal information, profile picture, and public bio."
   />
 );
 

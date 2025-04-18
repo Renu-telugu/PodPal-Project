@@ -18,6 +18,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import UploadPodcast from "./pages/UploadPodcast";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 import UserDashboard from "./components/User/UserDashboard";
 
 // Context
@@ -56,6 +57,14 @@ const App = () => {
                     <RoleBasedRoute allowedRole="user">
                       <UserDashboard />
                     </RoleBasedRoute>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />
