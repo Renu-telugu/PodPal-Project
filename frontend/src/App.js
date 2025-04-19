@@ -24,6 +24,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ExplorePodcasts from "./pages/ExplorePodcasts";
+import PodcastDetails from "./pages/PodcastDetails";
 
 // Context
 import { AuthProvider } from "./context/AuthContext";
@@ -55,7 +56,10 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPassword />}
+              />
               <Route path="/explore" element={<ExplorePodcasts />} />
               <Route
                 path="/user/*"
@@ -85,6 +89,9 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/explore" element={<ExplorePodcasts />} />
+              <Route path="/podcast/:podcastId" element={<PodcastDetails />} />
+              <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>

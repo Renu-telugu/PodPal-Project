@@ -17,7 +17,7 @@ import {
   faUser,
   faCog,
   faCreditCard,
-  faCompass
+  faCompass,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./UserDashboard.module.css";
 
@@ -84,8 +84,10 @@ const UserDashboard = () => {
         },
         {
           label: "Explore Podcasts",
-          path: "/user/browse",
-          icon: <FontAwesomeIcon icon={faSearch} style={{ color: 'inherit' }} />,
+          path: "/explore",
+          icon: (
+            <FontAwesomeIcon icon={faSearch} style={{ color: "inherit" }} />
+          ),
         },
         {
           label: "My Library",
@@ -131,7 +133,7 @@ const UserDashboard = () => {
           label: "Subscription",
           path: "/user/subscription",
           icon: <FontAwesomeIcon icon={faCreditCard} />,
-        }
+        },
       ],
     },
   ];
