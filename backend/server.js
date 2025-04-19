@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const authRoutes = require("./routes/auth");
 const podcastUploadRoutes = require("./routes/podcastUpload");
+const podcastRoutes = require("./routes/podcast");
 const channelRoutes = require("./routes/channel");
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/podcasts", podcastUploadRoutes);
+app.use("/api/general-podcasts", podcastRoutes);
 app.use("/api/channel", channelRoutes);
 
 // Root route with more detailed health check
@@ -40,6 +42,7 @@ app.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth/",
       podcasts: "/api/podcasts/",
+      generalPodcasts: "/api/general-podcasts/",
       channel: "/api/channel/",
     },
   });

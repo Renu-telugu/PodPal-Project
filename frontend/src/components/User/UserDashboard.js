@@ -6,6 +6,7 @@ import BrowsePodcasts from "./BrowsePodcasts";
 import MyPodcasts from "./MyPodcasts";
 import UploadPodcast from "../../pages/UploadPodcast";
 import Profile from "../../pages/Profile";
+import MyLibrary from "../../pages/MyLibrary";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -37,13 +38,6 @@ const SampleContent = ({ title, description }) => (
       </div>
     </div>
   </div>
-);
-
-const MyLibrary = () => (
-  <SampleContent
-    title="My Library"
-    description="Access your saved podcasts, favorite episodes, and custom playlists."
-  />
 );
 
 const Drafts = () => (

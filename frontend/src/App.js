@@ -19,6 +19,7 @@ import Dashboard from "./pages/Dashboard";
 import UploadPodcast from "./pages/UploadPodcast";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import MyLibrary from "./pages/MyLibrary";
 import UserDashboard from "./components/User/UserDashboard";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -81,6 +82,7 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/library" element={<MyLibrary />} />
               <Route
                 path="/profile"
                 element={

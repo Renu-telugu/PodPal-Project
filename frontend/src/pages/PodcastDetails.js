@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import styled from "styled-components";
 
 const PodcastDetailsContainer = styled.div`
@@ -39,6 +40,31 @@ const CoverImage = styled.img`
   border-radius: 8px;
   margin-bottom: 1.5rem;
 `;
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1rem;
+`;
+
+const ActionButton = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text || "#333"};
+  font-size: 1rem;
+
+  svg {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  &:hover svg {
+    color: ${({ theme }) => theme.colors.primary || "#7c3aed"};
+  }
+`;
 
 const PodcastDetails = () => {
   const { podcastId } = useParams();
@@ -71,7 +97,7 @@ const PodcastDetails = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `/api/podcasts/${podcastId}/like`,
+        `/api/general-podcasts/${podcastId}/like`,
         {},
         {
           headers: {
@@ -95,7 +121,7 @@ const PodcastDetails = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `/api/podcasts/${podcastId}/save`,
+        `/api/general-podcasts/${podcastId}/save`,
         {},
         {
           headers: {
@@ -135,11 +161,16 @@ const PodcastDetails = () => {
         />
         Your browser does not support the audio element.
       </AudioPlayer>
-      <div>
-        <button onClick={() => handleLike(podcast._id)}>Like</button>
-        <button onClick={() => handleSave(podcast._id)}>Save</button>
-      </div>
-      <p>Likes: {podcast.likes}</p>
+      <ActionContainer>
+        <ActionButton onClick={() => handleLike(podcast._id)}>
+          {podcast.likes > 0 ? <FaHeart /> : <FaRegHeart />}
+          <span>{podcast.likes} Likes</span>
+        </ActionButton>
+        <ActionButton onClick={() => handleSave(podcast._id)}>
+          <FaBookmark />
+          <span>Save</span>
+        </ActionButton>
+      </ActionContainer>
       <Analytics>
         <p>Views: {podcast.views}</p>
         <p>Likes: {podcast.likes}</p>
