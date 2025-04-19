@@ -144,6 +144,23 @@ export const AuthProvider = ({ children }) => {
     } else {
       setUser(null);
     }
+
+    // Initialize or reset mock users database with default users
+    const defaultMockUsers = [
+      { id: 'user-1', email: "user@example.com", username: "user", name: "Test User", role: "user", password: "Password123!" },
+      { id: 'admin-1', email: "admin@gmail.com", username: "admin", name: "Administrator", role: "admin", password: "Admin@123" },
+      { id: 'user-2', email: "test@test.com", username: "testuser", name: "Test Account", role: "user", password: "Test@123" },
+      { id: 'user-3', email: "telugurenuka2005@gmail.com", username: "renu", name: "Renu", role: "user", password: "Renu@123" },
+      { id: 'user-4', email: "sreeja@example.com", username: "sreeja", name: "Sreeja", role: "user", password: "Sreeja@123" },
+      { id: 'user-5', email: "sona@example.com", username: "sona", name: "Sona", role: "user", password: "Sona@1234" }
+    ];
+    
+    // Only initialize if mockUsersDatabase doesn't exist yet - don't override existing database
+    if (!localStorage.getItem('mockUsersDatabase')) {
+      localStorage.setItem('mockUsersDatabase', JSON.stringify(defaultMockUsers));
+      console.log("Initialized mock users database with default users");
+    }
+    
     setLoading(false);
   }, []);
 
@@ -163,7 +180,9 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
+      // Send the signup request to the backend API
       const response = await axios.post(`${API_URL}/signup`, signupData);
+      
       console.log("Signup Response:", {
         status: response.status,
         statusText: response.statusText,
@@ -224,26 +243,7 @@ export const AuthProvider = ({ children }) => {
         role: loginData.role
       });
 
-      // Get persistent mock users database or create if it doesn't exist
-      const mockUsers = JSON.parse(localStorage.getItem('mockUsersDatabase') || JSON.stringify([
-        { id: 'user-1', email: "user@example.com", username: "user", name: "Test User", role: "user", password: "Password123!" },
-        { id: 'admin-1', email: "admin@gmail.com", username: "admin", name: "Administrator", role: "admin", password: "Admin@123" },
-        { id: 'user-2', email: "test@test.com", username: "testuser", name: "Test Account", role: "user", password: "Test@123" },
-        { id: 'user-3', email: "telugurenuka2005@gmail.com", username: "renu", name: "Renu", role: "user", password: "Renu@123" }
-      ]));
-
-      // Make sure the database is initialized
-      if (!localStorage.getItem('mockUsersDatabase')) {
-        localStorage.setItem('mockUsersDatabase', JSON.stringify(mockUsers));
-      }
-
-      // For debugging
-      console.log("Debug - Input credentials:", {
-        username: loginData.username,
-        password: loginData.password ? '****' : 'empty' // Don't log actual password
-      });
-      
-      // Check if it's admin login first to maintain backward compatibility
+      // For admin login, keep the direct check for compatibility
       if (loginData.role === 'admin' && 
           loginData.username === ADMIN_CREDENTIALS.username && 
           loginData.password === ADMIN_CREDENTIALS.password) {
@@ -280,62 +280,86 @@ export const AuthProvider = ({ children }) => {
         };
       }
       
-      // Try to authenticate user from mock database
-      const matchedUser = mockUsers.find(user => 
-        (user.username.toLowerCase() === loginData.username.toLowerCase() || 
-         user.email.toLowerCase() === loginData.username.toLowerCase())
-      );
-      
-      console.log("Debug - Matched user:", matchedUser ? {
-        username: matchedUser.username,
-        email: matchedUser.email,
-        role: matchedUser.role
-      } : 'No user found');
-      
-      // Check if user exists and password matches
-      if (matchedUser && matchedUser.password === loginData.password) {
-        // Create a user object without the password
-        const authenticatedUser = {
-          id: matchedUser.id,
-          username: matchedUser.username,
-          email: matchedUser.email,
-          name: matchedUser.name,
-          role: matchedUser.role
+      // For regular users, make a real API call to MongoDB
+      try {
+        // Prepare the request data
+        const requestData = {
+          // Use the username field as email for the backend
+          email: loginData.username,
+          password: loginData.password
         };
         
-        // Generate mock token
-        const mockToken = btoa(JSON.stringify({
-          user: authenticatedUser,
-          exp: new Date().getTime() + (7 * 24 * 60 * 60 * 1000) // 7 days
-        }));
+        console.log("Sending login request to backend:", {
+          url: `${API_URL}/login`,
+          email: requestData.email
+        });
         
-        // Store user data
-        localStorage.setItem("token", mockToken);
-        localStorage.setItem("user", JSON.stringify(authenticatedUser));
-        localStorage.setItem("userRole", matchedUser.role);
-        localStorage.setItem("isAuthenticated", "true");
+        // Make the API request
+        const response = await axios.post(`${API_URL}/login`, requestData);
         
-        setUser(authenticatedUser);
+        console.log("Login API Response:", {
+          status: response.status,
+          success: response.data.success,
+          message: response.data.message
+        });
         
-        console.log("User login successful:", authenticatedUser.username);
-        
-        return {
-          success: true,
-          role: matchedUser.role,
-          message: "Login successful!"
-        };
-      } else {
-        console.log("Login failed: Invalid credentials");
-        
-        if (matchedUser) {
-          console.log("Password mismatch - Provided:", loginData.password ? loginData.password.length + " chars" : "empty",
-                     "Stored:", matchedUser.password ? matchedUser.password.length + " chars" : "empty");
+        // Check if login was successful
+        if (response.data.success) {
+          const { token, user } = response.data;
+          
+          // Store authentication data
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("userRole", user.role);
+          localStorage.setItem("isAuthenticated", "true");
+          
+          setUser(user);
+          
+          console.log("User login successful:", user.name);
+          
+          return {
+            success: true,
+            role: user.role,
+            message: "Login successful!"
+          };
+        } else {
+          // Handle unsuccessful login from API
+          return {
+            success: false,
+            message: response.data.message || "Invalid username or password"
+          };
         }
+      } catch (apiError) {
+        // Handle API errors
+        console.error("Login API Error:", apiError);
         
-        return {
-          success: false,
-          message: "Invalid username or password."
-        };
+        if (apiError.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error("API Error Response:", {
+            status: apiError.response.status,
+            data: apiError.response.data
+          });
+          
+          return {
+            success: false,
+            message: apiError.response.data.message || "Invalid username or password"
+          };
+        } else if (apiError.request) {
+          // The request was made but no response was received
+          console.error("No response received from server");
+          return {
+            success: false,
+            message: "Could not connect to the server. Please try again later."
+          };
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error("Error setting up request:", apiError.message);
+          return {
+            success: false,
+            message: "An error occurred during login. Please try again."
+          };
+        }
       }
     } catch (error) {
       console.error("Login Error:", error);
@@ -502,7 +526,9 @@ export const AuthProvider = ({ children }) => {
         { id: 'user-1', email: "user@example.com", username: "user", name: "Test User", role: "user", password: "Password123!" },
         { id: 'admin-1', email: "admin@gmail.com", username: "admin", name: "Administrator", role: "admin", password: "Admin@123" },
         { id: 'user-2', email: "test@test.com", username: "testuser", name: "Test Account", role: "user", password: "Test@123" },
-        { id: 'user-3', email: "telugurenuka2005@gmail.com", username: "renu", name: "Renu", role: "user", password: "Renu@123" }
+        { id: 'user-3', email: "telugurenuka2005@gmail.com", username: "renu", name: "Renu", role: "user", password: "Renu@123" },
+        { id: 'user-4', email: "sreeja@example.com", username: "sreeja", name: "Sreeja", role: "user", password: "Sreeja@123" },
+        { id: 'user-5', email: "sona@example.com", username: "sona", name: "Sona", role: "user", password: "Sona@1234" }
       ]));
       
       // Update the user's password in our mock database
@@ -587,6 +613,28 @@ export const AuthProvider = ({ children }) => {
     };
   };
 
+  // Debug utility: Reset mock database completely
+  const resetMockUsers = () => {
+    // Default users that should always exist in the database
+    const defaultMockUsers = [
+      { id: 'user-1', email: "user@example.com", username: "user", name: "Test User", role: "user", password: "Password123!" },
+      { id: 'admin-1', email: "admin@gmail.com", username: "admin", name: "Administrator", role: "admin", password: "Admin@123" },
+      { id: 'user-2', email: "test@test.com", username: "testuser", name: "Test Account", role: "user", password: "Test@123" },
+      { id: 'user-3', email: "telugurenuka2005@gmail.com", username: "renu", name: "Renu", role: "user", password: "Renu@123" },
+      { id: 'user-4', email: "sreeja@example.com", username: "sreeja", name: "Sreeja", role: "user", password: "Sreeja@123" },
+      { id: 'user-5', email: "sona@example.com", username: "sona", name: "Sona", role: "user", password: "Sona@1234" }
+    ];
+    
+    // Force reset the mock database to include these users
+    localStorage.setItem('mockUsersDatabase', JSON.stringify(defaultMockUsers));
+    console.log("Mock users database has been reset");
+    
+    // Display the reset database in the console for debugging
+    console.table(defaultMockUsers);
+    
+    return { success: true, message: "Mock user database has been reset" };
+  };
+
   // Context value
   const value = {
     user,
@@ -600,7 +648,8 @@ export const AuthProvider = ({ children }) => {
     getAuthHeader,
     getToken,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
+    resetMockUsers
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

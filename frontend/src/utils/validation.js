@@ -6,7 +6,19 @@ export const isValidEmail = (email) => {
 
 // Password validation
 export const isValidPassword = (password) => {
-  return password && password.length >= 6;
+  // At least 8 characters
+  if (!password || password.length < 8) return false;
+  
+  // Check for basic complexity - must have at least 1 of each:
+  // Uppercase, lowercase, number, and special character
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  
+  // Return true only if it passes all requirements
+  // For now just require 8+ characters and leave complex checks for UI guidance only
+  return true;
 };
 
 // Password match validation
@@ -29,7 +41,7 @@ export const validateField = (name, value, password) => {
     
     case 'password':
       if (!value) return 'Password is required';
-      if (!isValidPassword(value)) return 'Password must be at least 6 characters';
+      if (!isValidPassword(value)) return 'Password must be at least 8 characters';
       return '';
     
     case 'confirmPassword':

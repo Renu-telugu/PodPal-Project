@@ -148,9 +148,16 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check for user
-    const user = await User.findOne({ email }).select("+password");
+    // Check for user by email or username
+    const user = await User.findOne({
+      $or: [
+        { email: email },
+        { name: email }  // This allows login with username (stored in name field)
+      ]
+    }).select("+password");
+    
     if (!user) {
+      console.log(`Login failed: No user found with email/username: ${email}`);
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
@@ -160,6 +167,7 @@ exports.login = async (req, res) => {
     // Check if password matches
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
+      console.log(`Login failed: Password mismatch for user: ${email}`);
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
@@ -172,6 +180,8 @@ exports.login = async (req, res) => {
 
     // Create token
     const token = user.getSignedJwtToken();
+    
+    console.log(`Login successful for user: ${user.name} (${user.email})`);
     
     res.status(200).json({
       success: true,

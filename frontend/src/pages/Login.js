@@ -4,6 +4,7 @@ import styled, { keyframes } from 'styled-components';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { validateField } from '../utils/validation';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import {
   FormContainer,
   FormTitle,
@@ -102,6 +103,32 @@ const ForgotPasswordLink = styled(Link)`
   }
 `;
 
+// Styled component for password input wrapper
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordToggleButton = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors?.text || '#666'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  
+  &:hover, &:focus {
+    color: ${({ theme }) => theme.colors?.primary || '#7c3aed'};
+    outline: none;
+  }
+`;
+
 // Login page component
 const Login = () => {
   const navigate = useNavigate();
@@ -118,6 +145,9 @@ const Login = () => {
   const [generalError, setGeneralError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugMessage, setDebugMessage] = useState('');
   
   // Handle input change
   const handleChange = (e) => {
@@ -139,6 +169,31 @@ const Login = () => {
     }
   };
   
+  // Handle debug button click
+  const handleDebugClick = async () => {
+    setDebugMessage("Checking database connection...");
+    
+    try {
+      // Try to connect to the auth API
+      const response = await fetch("/api/auth/debug", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDebugMessage(`Database connection successful! Server: ${data.server || 'Unknown'}`);
+      } else {
+        setDebugMessage(`Error connecting to database: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      setDebugMessage(`Connection error: ${error.message}`);
+      console.error("Debug error:", error);
+    }
+  };
+  
   // Toggle between user and admin login modes
   const toggleAdminMode = (adminMode) => {
     setIsAdminMode(adminMode);
@@ -149,6 +204,16 @@ const Login = () => {
       username: '',
       password: '',
     });
+  };
+  
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
+  // Toggle debug panel
+  const toggleDebugPanel = () => {
+    setShowDebug(!showDebug);
   };
   
   // Handle form submission
@@ -258,16 +323,25 @@ const Login = () => {
             
             <FormGroup>
               <Label htmlFor="password">Password</Label>
-              <Input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-              />
+              <PasswordInputWrapper>
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                />
+                <PasswordToggleButton 
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </PasswordToggleButton>
+              </PasswordInputWrapper>
               {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
             </FormGroup>
             
@@ -280,6 +354,56 @@ const Login = () => {
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Logging in...' : (isAdminMode ? 'Admin Login' : 'Login')}
             </Button>
+            
+            {/* Debug button - click 5 times to show debug info */}
+            <div 
+              style={{ marginTop: '20px', textAlign: 'center' }}
+              onClick={toggleDebugPanel}
+            >
+              <small style={{ cursor: 'pointer', color: '#999' }}>
+                API Connection: {process.env.REACT_APP_API_URL || "/api/auth"}
+              </small>
+            </div>
+            
+            {showDebug && (
+              <div style={{ 
+                marginTop: '15px', 
+                padding: '10px', 
+                background: '#f8f9fa', 
+                border: '1px solid #ddd',
+                borderRadius: '4px'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Debug Information</h4>
+                <p style={{ margin: '0 0 10px 0', fontSize: '12px' }}>
+                  API URL: {process.env.REACT_APP_API_URL || "/api/auth"}
+                </p>
+                <p style={{ fontSize: '12px' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleDebugClick}
+                    style={{
+                      padding: '5px 10px',
+                      fontSize: '12px',
+                      background: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Test MongoDB Connection
+                  </button>
+                  {debugMessage && (
+                    <span style={{ marginLeft: '10px', fontSize: '12px' }}>
+                      {debugMessage}
+                    </span>
+                  )}
+                </p>
+                <p style={{ margin: '10px 0 0 0', fontSize: '12px' }}>
+                  <strong>Note:</strong> Use the credentials "sreeja@example.com" and "sreeja" to login as test users.
+                </p>
+              </div>
+            )}
           </Form>
           
           {isAdminMode ? (

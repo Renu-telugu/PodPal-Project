@@ -4,8 +4,9 @@ import styled, { keyframes } from 'styled-components';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { validateField } from '../utils/validation';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import {
-  FormContainer,
+  FormContainer as BaseFormContainer,
   FormTitle,
   Form,
   FormGroup,
@@ -15,6 +16,7 @@ import {
   ErrorMessage,
   LinkText
 } from '../components/FormElements';
+import PasswordStrength from '../components/Auth/PasswordStrength';
 
 // Animation
 const slideIn = keyframes`
@@ -28,13 +30,22 @@ const slideIn = keyframes`
   }
 `;
 
+// Enhanced form container with larger width
+const FormContainer = styled(BaseFormContainer)`
+  max-width: 550px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+`;
+
 // Styled components
 const SignupContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 70vh;
+  min-height: 80vh;
   animation: ${slideIn} 0.5s ease;
+  padding: 2rem 0;
 `;
 
 const AlertMessage = styled.div`
@@ -49,25 +60,48 @@ const AlertMessage = styled.div`
     type === 'error' ? theme.colors.error : theme.colors.success};
 `;
 
+// Styled component for password input wrapper
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordToggleButton = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors?.text || '#666'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  
+  &:hover, &:focus {
+    color: ${({ theme }) => theme.colors?.primary || '#7c3aed'};
+    outline: none;
+  }
+`;
+
 // Signup page component
 const Signup = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  
-  // Form state
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
-  
-  // Validation and UI state
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -75,18 +109,25 @@ const Signup = () => {
       [name]: value
     });
     
-    // Validate field on change
-    const error = name === 'confirmPassword' 
-      ? validateField(name, value, formData.password)
-      : validateField(name, value);
-      
-    setErrors({
-      ...errors,
-      [name]: error
-    });
+    // Clear error for the field being changed
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
   
-  // Handle form submission
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -136,7 +177,7 @@ const Signup = () => {
     <Layout>
       <SignupContainer>
         <FormContainer>
-          <FormTitle>Sign Up</FormTitle>
+          <FormTitle>Create Your Account</FormTitle>
           
           {generalError && (
             <AlertMessage type="error">{generalError}</AlertMessage>
@@ -144,7 +185,7 @@ const Signup = () => {
           
           <Form onSubmit={handleSubmit}>
             <FormGroup>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 type="text"
                 id="name"
@@ -152,14 +193,14 @@ const Signup = () => {
                 value={formData.name}
                 onChange={handleChange}
                 error={errors.name}
-                placeholder="Enter your name"
+                placeholder="Enter your full name"
                 autoComplete="name"
               />
               {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
             </FormGroup>
             
             <FormGroup>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 type="email"
                 id="email"
@@ -167,7 +208,7 @@ const Signup = () => {
                 value={formData.email}
                 onChange={handleChange}
                 error={errors.email}
-                placeholder="Enter your email"
+                placeholder="Enter your email address"
                 autoComplete="email"
               />
               {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
@@ -175,31 +216,51 @@ const Signup = () => {
             
             <FormGroup>
               <Label htmlFor="password">Password</Label>
-              <Input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                placeholder="Create a password (min. 6 characters)"
-                autoComplete="new-password"
-              />
+              <PasswordInputWrapper>
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  placeholder="Create a strong password (min. 8 characters)"
+                  autoComplete="new-password"
+                />
+                <PasswordToggleButton 
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </PasswordToggleButton>
+              </PasswordInputWrapper>
               {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
+              
+              <PasswordStrength password={formData.password} />
             </FormGroup>
             
             <FormGroup>
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                error={errors.confirmPassword}
-                placeholder="Confirm your password"
-                autoComplete="new-password"
-              />
+              <PasswordInputWrapper>
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  error={errors.confirmPassword}
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                />
+                <PasswordToggleButton 
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </PasswordToggleButton>
+              </PasswordInputWrapper>
               {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
             </FormGroup>
             
