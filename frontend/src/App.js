@@ -7,8 +7,7 @@ import {
 } from "react-router-dom";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import GlobalStyle from "./styles/GlobalStyles";
-import { lightTheme } from "./styles/theme";
-import { useTheme } from "styled-components";
+import { lightTheme, darkTheme } from "./styles/theme";
 import { useAuth } from "./context/AuthContext";
 
 // Pages
@@ -29,7 +28,7 @@ import PodcastDetails from "./pages/PodcastDetails";
 
 // Context
 import { AuthProvider } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
 // Components
 import ThemeToggle from "./components/ThemeToggle";
@@ -45,59 +44,67 @@ const RoleBasedRoute = ({ allowedRole, children }) => {
   return userRole === allowedRole ? children : <Navigate to="/login" />;
 };
 
+// Theme-aware app content
+const ThemedApp = () => {
+  const { theme } = useTheme();
+  const currentTheme = theme === 'dark' ? darkTheme : lightTheme;
+
+  return (
+    <StyledThemeProvider theme={currentTheme}>
+      <GlobalStyle />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPassword />}
+          />
+          <Route
+            path="/user/*"
+            element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRole="user">
+                  <UserDashboard />
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRole="admin">
+                  <AdminDashboard />
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/library" element={<MyLibrary />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/explore" element={<Navigate to="/user/explore" replace />} />
+          <Route path="/podcast/:podcastId" element={<PodcastDetails />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </StyledThemeProvider>
+  );
+};
+
 const App = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <StyledThemeProvider theme={lightTheme}>
-          <GlobalStyle />
-          <Router>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route
-                path="/reset-password/:token"
-                element={<ResetPassword />}
-              />
-              <Route path="/explore" element={<ExplorePodcasts />} />
-              <Route
-                path="/user/*"
-                element={
-                  <ProtectedRoute>
-                    <RoleBasedRoute allowedRole="user">
-                      <UserDashboard />
-                    </RoleBasedRoute>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/*"
-                element={
-                  <ProtectedRoute>
-                    <RoleBasedRoute allowedRole="admin">
-                      <AdminDashboard />
-                    </RoleBasedRoute>
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/library" element={<MyLibrary />} />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/explore" element={<ExplorePodcasts />} />
-              <Route path="/podcast/:podcastId" element={<PodcastDetails />} />
-              <Route path="*" element={<NotFound />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Router>
-        </StyledThemeProvider>
+        <ThemedApp />
       </ThemeProvider>
     </AuthProvider>
   );

@@ -382,95 +382,93 @@ const ExplorePodcasts = () => {
   }, [podcasts, searchQuery, activeFilter]);
 
   return (
-    <Layout>
-      <ExploreContainer>
-        <Header>
-          <Title>Explore Podcasts</Title>
-          <SearchContainer>
-            <SearchIcon>
-              <FaSearch />
-            </SearchIcon>
-            <SearchInput
-              type="text"
-              placeholder="Search podcasts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </SearchContainer>
-        </Header>
+    <ExploreContainer>
+      <Header>
+        <Title>Explore Podcasts</Title>
+        <SearchContainer>
+          <SearchIcon>
+            <FaSearch />
+          </SearchIcon>
+          <SearchInput
+            type="text"
+            placeholder="Search podcasts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </SearchContainer>
+      </Header>
 
-        <FilterContainer>
-          <FilterButton
-            active={activeFilter === "All"}
-            onClick={() => setActiveFilter("All")}
-          >
-            All
-          </FilterButton>
-          {[...new Set(podcasts.map((podcast) => podcast.genre))].map(
-            (genre) => (
-              <FilterButton
-                key={genre}
-                active={activeFilter === genre}
-                onClick={() => setActiveFilter(genre)}
-              >
-                {genre}
-              </FilterButton>
-            )
-          )}
-        </FilterContainer>
-
-        {filteredPodcasts.length > 0 ? (
-          <PodcastGrid>
-            {filteredPodcasts.map((podcast) => (
-              <PodcastCard key={podcast._id}>
-                <CardImage
-                  src={`http://localhost:5000/${podcast.coverImagePath}`}
-                  onClick={() => navigate(`/podcast/${podcast._id}`)} // Navigate to PodcastDetails
-                >
-                  <CardOverlay className="card-overlay">
-                    <h3>{podcast.title}</h3>
-                    <p>{podcast.description}</p>
-                  </CardOverlay>
-                  <CardActions className="card-actions">
-                    <PlayButton
-                      onClick={() => navigate(`/podcast/${podcast._id}`)}
-                    >
-                      <FaPlay />
-                    </PlayButton>
-                    <div>
-                      <ActionButton onClick={() => handleLike(podcast._id)}>
-                        <FaHeart />
-                      </ActionButton>
-                      <ActionButton onClick={() => handleSave(podcast._id)}>
-                        <FaBookmark />
-                      </ActionButton>
-                    </div>
-                  </CardActions>
-                </CardImage>
-                <CardContent>
-                  <CategoryTag>{podcast.genre}</CategoryTag>
-                  <h3>{podcast.title}</h3>
-                  <p>{podcast.duration || "Unknown duration"}</p>
-                  <AuthorInfo>
-                    <img
-                      src={`https://ui-avatars.com/api/?name=${podcast.creatorDetails.name}`}
-                      alt={podcast.creatorDetails.name}
-                    />
-                    <span>{podcast.creatorDetails.name}</span>
-                  </AuthorInfo>
-                  <p>Likes: {podcast.likes}</p>
-                </CardContent>
-              </PodcastCard>
-            ))}
-          </PodcastGrid>
-        ) : (
-          <NoResults>
-            No podcasts found matching your search. Try different keywords or
-            filters.
-          </NoResults>
+      <FilterContainer>
+        <FilterButton
+          active={activeFilter === "All"}
+          onClick={() => setActiveFilter("All")}
+        >
+          All
+        </FilterButton>
+        {[...new Set(podcasts.map((podcast) => podcast.genre))].map(
+          (genre) => (
+            <FilterButton
+              key={genre}
+              active={activeFilter === genre}
+              onClick={() => setActiveFilter(genre)}
+            >
+              {genre}
+            </FilterButton>
+          )
         )}
-      </ExploreContainer>
-    </Layout>
+      </FilterContainer>
+
+      {filteredPodcasts.length > 0 ? (
+        <PodcastGrid>
+          {filteredPodcasts.map((podcast) => (
+            <PodcastCard key={podcast._id}>
+              <CardImage
+                src={`http://localhost:5000/${podcast.coverImagePath}`}
+                onClick={() => navigate(`/podcast/${podcast._id}`)} // Navigate to PodcastDetails
+              >
+                <CardOverlay className="card-overlay">
+                  <h3>{podcast.title}</h3>
+                  <p>{podcast.description}</p>
+                </CardOverlay>
+                <CardActions className="card-actions">
+                  <PlayButton
+                    onClick={() => navigate(`/podcast/${podcast._id}`)}
+                  >
+                    <FaPlay />
+                  </PlayButton>
+                  <div>
+                    <ActionButton onClick={() => handleLike(podcast._id)}>
+                      <FaHeart />
+                    </ActionButton>
+                    <ActionButton onClick={() => handleSave(podcast._id)}>
+                      <FaBookmark />
+                    </ActionButton>
+                  </div>
+                </CardActions>
+              </CardImage>
+              <CardContent>
+                <CategoryTag>{podcast.genre}</CategoryTag>
+                <h3>{podcast.title}</h3>
+                <p>{podcast.duration || "Unknown duration"}</p>
+                <AuthorInfo>
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${podcast.creatorDetails.name}`}
+                    alt={podcast.creatorDetails.name}
+                  />
+                  <span>{podcast.creatorDetails.name}</span>
+                </AuthorInfo>
+                <p>Likes: {podcast.likes}</p>
+              </CardContent>
+            </PodcastCard>
+          ))}
+        </PodcastGrid>
+      ) : (
+        <NoResults>
+          No podcasts found matching your search. Try different keywords or
+          filters.
+        </NoResults>
+      )}
+    </ExploreContainer>
   );
 };
 

@@ -7,6 +7,7 @@ import MyPodcasts from "./MyPodcasts";
 import UploadPodcast from "../../pages/UploadPodcast";
 import Profile from "../../pages/Profile";
 import MyLibrary from "../../pages/MyLibrary";
+import ExplorePodcasts from "../../pages/ExplorePodcasts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -78,7 +79,7 @@ const UserDashboard = () => {
         },
         {
           label: "Explore Podcasts",
-          path: "/explore",
+          path: "/user/explore",
           icon: (
             <FontAwesomeIcon icon={faSearch} style={{ color: "inherit" }} />
           ),
@@ -141,6 +142,7 @@ const UserDashboard = () => {
         <Route path="/" element={<Navigate to="/user/dashboard" replace />} />
         <Route path="/dashboard" element={<UserHome />} />
         <Route path="/browse" element={<BrowsePodcasts />} />
+        <Route path="/explore" element={<ExplorePodcasts />} />
         <Route path="/library" element={<MyLibrary />} />
         <Route path="/upload" element={<UploadPodcast />} />
         <Route path="/my-podcasts" element={<MyPodcasts />} />

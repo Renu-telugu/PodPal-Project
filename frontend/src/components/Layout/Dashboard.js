@@ -4,17 +4,23 @@ import styles from './Dashboard.module.css';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ThemeToggle from '../ThemeToggle';
 import { 
   faHeadphones, 
   faChevronLeft, 
   faChevronRight, 
   faBars,
   faSignOutAlt,
-  faUser,
-  faToggleOn,
-  faToggleOff
+  faUser
 } from '@fortawesome/free-solid-svg-icons';
 import styled from 'styled-components';
+
+// Styled components for custom elements
+const HeaderControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
 
 /**
  * Dashboard Layout Component
@@ -77,32 +83,14 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
   
   return (
     <div className={`${styles.dashboardContainer} ${isDarkMode ? styles.darkMode : ''}`}>
-      {/* Mobile Header */}
-      <div className={styles.mobileHeader}>
-        <button
-          className={styles.mobileSidebarToggle}
-          onClick={toggleMobileSidebar}
-        >
-          <FontAwesomeIcon icon={faBars} />
-        </button>
-        <h2 className={styles.mobileTitle}>{pageTitle}</h2>
-      </div>
-      
       {/* Sidebar */}
-      <div
-        className={`${styles.sidebar} ${
-          isSidebarCollapsed ? styles.collapsed : ''
-        } ${isMobileSidebarOpen ? styles.mobileOpen : ''}`}
-      >
+      <div className={`${styles.sidebar} ${isSidebarCollapsed ? styles.collapsed : ''} ${isMobileSidebarOpen ? styles.mobileOpen : ''}`}>
         <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>
+          <Link to="/" className={styles.logo}>
             <FontAwesomeIcon icon={faHeadphones} className={styles.logoIcon} />
-            {!isSidebarCollapsed && <span className={styles.logoText}>PodPal</span>}
-          </div>
-          <button
-            className={styles.sidebarToggle}
-            onClick={toggleSidebar}
-          >
+            {!isSidebarCollapsed && <span>PodPal</span>}
+          </Link>
+          <button className={styles.sidebarToggle} onClick={toggleSidebar}>
             <FontAwesomeIcon icon={isSidebarCollapsed ? faChevronRight : faChevronLeft} />
           </button>
         </div>
@@ -110,44 +98,19 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
         <div className={styles.sidebarContent}>
           {Object.entries(groupedMenuItems).map(([sectionName, items]) => (
             <div key={sectionName} className={styles.menuGroup}>
-              {!isSidebarCollapsed && (
-                <h3 className={styles.menuGroupTitle}>{sectionName}</h3>
-              )}
+              {!isSidebarCollapsed && <h3 className={styles.menuGroupTitle}>{sectionName}</h3>}
               <ul className={styles.menuList}>
-                {items.map((item, index) => (
-                  <li key={index} className={styles.menuItem}>
-                    {item.isExternal ? (
-                      <Link
-                        to={item.path}
-                        className={styles.menuLink}
-                        title={isSidebarCollapsed ? item.label : ''}
-                      >
-                        <span className={styles.menuIcon}>
-                          {typeof item.icon === 'string' 
-                            ? <FontAwesomeIcon icon={item.icon} /> 
-                            : item.icon}
-                        </span>
-                        {!isSidebarCollapsed && (
-                          <span className={styles.menuLabel}>{item.label}</span>
-                        )}
-                      </Link>
-                    ) : (
-                      <NavLink
-                        to={item.path}
-                        end
-                        className={({ isActive }) => isActive ? styles.activeMenuLink : styles.menuLink}
-                        title={isSidebarCollapsed ? item.label : ''}
-                      >
-                        <span className={styles.menuIcon}>
-                          {typeof item.icon === 'string' 
-                            ? <FontAwesomeIcon icon={item.icon} /> 
-                            : item.icon}
-                        </span>
-                        {!isSidebarCollapsed && (
-                          <span className={styles.menuLabel}>{item.label}</span>
-                        )}
-                      </NavLink>
-                    )}
+                {items.map((item) => (
+                  <li key={item.path} className={styles.menuItem}>
+                    <NavLink 
+                      to={item.path}
+                      className={({ isActive }) => 
+                        isActive ? styles.activeMenuLink : styles.menuLink
+                      }
+                    >
+                      <span className={styles.menuIcon}>{item.icon}</span>
+                      {!isSidebarCollapsed && <span className={styles.menuLabel}>{item.label}</span>}
+                    </NavLink>
                   </li>
                 ))}
               </ul>
@@ -163,19 +126,10 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
               </div>
               <div>
                 <div className={styles.userName}>{user?.name || 'User'}</div>
-                <div className={styles.userRole}>{user?.role || 'User'}</div>
+                {user?.role !== 'user' && <div className={styles.userRole}>{user?.role}</div>}
               </div>
             </div>
           )}
-          
-          <button 
-            className={styles.themeToggle}
-            onClick={toggleTheme}
-            title="Toggle dark mode"
-          >
-            <FontAwesomeIcon icon={isDarkMode ? faToggleOn : faToggleOff} />
-            {!isSidebarCollapsed && <span>Dark Mode</span>}
-          </button>
           
           <button onClick={handleLogout} className={styles.logoutButton}>
             <FontAwesomeIcon icon={faSignOutAlt} className={styles.logoutIcon} />
@@ -193,32 +147,26 @@ const Dashboard = ({ menuItems, children, pageTitle = 'Dashboard' }) => {
       )}
       
       {/* Main Content */}
-      <div 
-        className={`${styles.mainContent} ${
-          isSidebarCollapsed ? styles.expanded : ''
-        }`}
-      >
+      <div className={`${styles.mainContent} ${isSidebarCollapsed ? styles.expanded : ''}`}>
+        {/* Mobile Header */}
+        <div className={styles.mobileHeader}>
+          <button className={styles.mobileSidebarToggle} onClick={toggleMobileSidebar}>
+            <FontAwesomeIcon icon={faBars} />
+          </button>
+          <div className={styles.mobileTitle}>{pageTitle}</div>
+          <ThemeToggle />
+        </div>
+        
+        {/* Desktop Header */}
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>{pageTitle}</h1>
-          
-          <div className={styles.headerControls}>
-            <button 
-              className={styles.themeToggleHeader}
-              onClick={toggleTheme}
-              title="Toggle dark mode"
-            >
-              <FontAwesomeIcon icon={isDarkMode ? faToggleOn : faToggleOff} />
-              <span>Theme</span>
-            </button>
-          </div>
+          <HeaderControls>
+            <ThemeToggle />
+          </HeaderControls>
         </div>
+        
         <div className={styles.contentWrapper}>
-          {children || (
-            <div className={styles.sampleContent}>
-              <h2>This is the {pageTitle} page</h2>
-              <p>This is sample content for demonstration purposes. Replace this with your actual content.</p>
-            </div>
-          )}
+          {children}
         </div>
       </div>
     </div>

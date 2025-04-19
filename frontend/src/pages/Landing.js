@@ -225,9 +225,6 @@ const Landing = () => {
               <PrimaryButton to={userRole === 'admin' ? '/admin/dashboard' : '/user/dashboard'}>
                 Go to Dashboard
               </PrimaryButton>
-              <SecondaryButton to="/explore">
-                Explore Podcasts
-              </SecondaryButton>
             </>
           ) : (
             <>

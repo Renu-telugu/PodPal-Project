@@ -149,9 +149,6 @@ const Layout = ({ children }) => {
             <>
               <UserWelcome>
                 Welcome, {user.name}
-                <RoleIndicator isAdmin={isAdmin}>
-                  ({isAdmin ? 'Admin' : 'User'})
-                </RoleIndicator>
               </UserWelcome>
               <Button onClick={handleLogout}>Logout</Button>
             </>

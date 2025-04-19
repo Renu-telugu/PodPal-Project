@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { useAuth } from "../context/AuthContext";
-import { FaUpload, FaMusic, FaImage, FaExclamationCircle } from "react-icons/fa";
+import { 
+  FaUpload, FaMusic, FaImage, FaExclamationCircle, 
+  FaCheckCircle, FaTimes, FaFileAudio, FaCamera 
+} from "react-icons/fa";
 
 const PageContainer = styled.div`
   padding: 2rem;
@@ -341,6 +344,169 @@ const SuccessMessage = styled.div`
   gap: 0.5rem;
 `;
 
+// Animation for fade in and slide in from top
+const slideInFromTop = keyframes`
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+`;
+
+// Enhanced styling for the flash messages
+const FlashMessage = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: ${slideInFromTop} 0.4s ease-out forwards;
+  transition: all 0.3s ease;
+  
+  & > svg {
+    margin-right: 12px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+  
+  & > p {
+    margin: 0;
+    flex-grow: 1;
+  }
+  
+  & > button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    font-size: 1.1rem;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
+const SuccessFlash = styled(FlashMessage)`
+  background-color: #10b981;
+  color: white;
+  border-left: 5px solid #059669;
+`;
+
+const ErrorFlash = styled(FlashMessage)`
+  background-color: #ef4444;
+  color: white;
+  border-left: 5px solid #dc2626;
+`;
+
+// Enhanced file upload containers with better visual indicators
+const EnhancedFileUploadContainer = styled.div`
+  border: 2px dashed ${(props) => props.active 
+    ? props.theme.colors?.primary || '#7c3aed' 
+    : props.theme.colors?.border || '#e2e8f0'};
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background-color: ${(props) => props.active 
+    ? (props.theme.colors?.primaryLight || 'rgba(124, 58, 237, 0.05)') 
+    : (props.theme.colors?.background || '#f8fafc')};
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  
+  &:hover {
+    border-color: ${(props) => props.theme.colors?.primary || '#7c3aed'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${(props) => props.theme.colors?.primary || '#7c3aed'};
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+  }
+  
+  &:hover::before {
+    opacity: 0.02;
+  }
+`;
+
+const EnhancedFileUploadIcon = styled.div`
+  font-size: 3rem;
+  color: ${(props) => props.theme.colors?.primary || '#7c3aed'};
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70px;
+`;
+
+const EnhancedFileUploadText = styled.div`
+  color: ${(props) => props.theme.colors?.text || '#1a202c'};
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+`;
+
+const EnhancedFileUploadHint = styled.div`
+  color: ${(props) => props.theme.colors?.textLight || '#718096'};
+  font-size: 0.875rem;
+  position: relative;
+  z-index: 1;
+`;
+
+const EnhancedButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background-color: ${(props) => props.theme.colors?.primary || '#7c3aed'};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  
+  &:hover {
+    background-color: ${(props) => props.theme.colors?.secondary || '#6025c0'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // Array of podcast genres
 const PODCAST_GENRES = [
   "Art",
@@ -354,6 +520,7 @@ const PODCAST_GENRES = [
   "Kids & Family",
   "Leisure",
   "Music",
+  "Nature",
   "News",
   "Religion & Spirituality",
   "Science",
@@ -399,24 +566,23 @@ const UploadPodcast = () => {
     language: "English",
     explicit: false,
     tags: [],
-    tagInput: "",
-    duration: "0:00"
+    tagInput: ""
   });
-
+  
   const [audioPreview, setAudioPreview] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
 
-  // Handle text input changes
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPodcastData((prev) => ({
-      ...prev,
-      [name]: value,
+    setPodcastData((prevData) => ({
+      ...prevData,
+      [name]: value
     }));
-    setError("");
   };
 
   // Handle checkbox changes
@@ -576,7 +742,6 @@ const UploadPodcast = () => {
     return true;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -584,6 +749,7 @@ const UploadPodcast = () => {
     
     setIsUploading(true);
     setError("");
+    setSuccess("");
     
     try {
       // Debug current token and auth state
@@ -631,6 +797,7 @@ const UploadPodcast = () => {
       
       if (!token) {
         setError("Authentication required. Please log in again.");
+        setShowFlash(true);
         console.error("No token found in localStorage");
         setIsUploading(false);
         
@@ -679,6 +846,7 @@ const UploadPodcast = () => {
         }
         
         setError(errorMessage);
+        setShowFlash(true);
         
         // Clear any existing tokens since they're invalid
         localStorage.removeItem("token");
@@ -700,6 +868,7 @@ const UploadPodcast = () => {
       
       // Show success message
       setSuccess("Podcast uploaded successfully!");
+      setShowFlash(true);
       
       // Redirect to my podcasts after 2 seconds
       setTimeout(() => {
@@ -709,15 +878,29 @@ const UploadPodcast = () => {
     } catch (error) {
       console.error("Upload Error:", error);
       setError(error.message || "An error occurred while uploading your podcast. Please try again.");
+      setShowFlash(true);
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Cancel upload and return to previous page
-  const handleCancel = () => {
-    navigate(-1);
+  // Close flash message
+  const closeFlash = () => {
+    setShowFlash(false);
+    setError("");
+    setSuccess("");
   };
+
+  // Automatically hide flash message after 5 seconds
+  useEffect(() => {
+    if (showFlash) {
+      const timer = setTimeout(() => {
+        setShowFlash(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showFlash]);
 
   // Cleanup on component unmount
   useEffect(() => {
@@ -730,6 +913,23 @@ const UploadPodcast = () => {
 
   return (
     <PageContainer>
+      {/* Flash Messages */}
+      {showFlash && error && (
+        <ErrorFlash>
+          <FaExclamationCircle />
+          <p>{error}</p>
+          <button onClick={closeFlash}><FaTimes /></button>
+        </ErrorFlash>
+      )}
+      
+      {showFlash && success && (
+        <SuccessFlash>
+          <FaCheckCircle />
+          <p>{success}</p>
+          <button onClick={closeFlash}><FaTimes /></button>
+        </SuccessFlash>
+      )}
+      
       <UploadContainer>
         <UploadHeader>
           <h1>Upload New Podcast</h1>
@@ -737,36 +937,6 @@ const UploadPodcast = () => {
         </UploadHeader>
         
         <FormContainer>
-          {error && (
-            <ErrorMessage>
-              <FaExclamationCircle />
-              {error}
-            </ErrorMessage>
-          )}
-          
-          {success && (
-            <SuccessMessage>
-              {success}
-            </SuccessMessage>
-          )}
-          
-          {/* Authentication Debug Info */}
-          <div style={{ marginBottom: '20px', padding: '10px', background: '#f0f0f0', borderRadius: '8px' }}>
-            <h3>Authentication Debug</h3>
-            <p>Current token status: {localStorage.getItem('token') ? 'Token exists' : 'No token'}</p>
-            <p>Token value: {localStorage.getItem('token') ? localStorage.getItem('token').substring(0, 15) + '...' : 'N/A'}</p>
-            
-            <div style={{ marginTop: '10px' }}>
-              <h4>Manual Authentication</h4>
-              <p>If you're experiencing authentication issues, you can:</p>
-              <ol>
-                <li>Make sure you are logged in - check that you see a token value above</li>
-                <li>Try logging out and back in if you don't see a token</li>
-                <li>Try refreshing the page to reload your authentication state</li>
-              </ol>
-            </div>
-          </div>
-          
           <form onSubmit={handleSubmit}>
             <FormSection>
               <h3>Basic Information</h3>
@@ -902,40 +1072,29 @@ const UploadPodcast = () => {
                     style={{ display: 'none' }}
                   />
                   
-                  {/* Custom button to trigger file selection */}
-                  <FileUploadContainer onClick={triggerAudioFileInput}>
-                    <FileUploadIcon>
-                      <FaMusic />
-                    </FileUploadIcon>
-                    <FileUploadText>
+                  {/* Enhanced upload area */}
+                  <EnhancedFileUploadContainer 
+                    onClick={triggerAudioFileInput}
+                    active={!!podcastData.audioFile}
+                  >
+                    <EnhancedFileUploadIcon>
+                      {podcastData.audioFile ? <FaFileAudio /> : <FaMusic />}
+                    </EnhancedFileUploadIcon>
+                    <EnhancedFileUploadText>
                       {podcastData.audioFile ? "Change audio file" : "Upload audio file"}
-                    </FileUploadText>
-                    <FileUploadHint>
+                    </EnhancedFileUploadText>
+                    <EnhancedFileUploadHint>
                       MP3, WAV, M4A (max. 50MB)
-                    </FileUploadHint>
-                  </FileUploadContainer>
+                    </EnhancedFileUploadHint>
+                  </EnhancedFileUploadContainer>
                   
-                  {/* Native button alternative */}
-                  <button 
+                  {/* Enhanced button */}
+                  <EnhancedButton 
                     type="button"
                     onClick={triggerAudioFileInput}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 15px',
-                      backgroundColor: '#7c3aed',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      width: '100%'
-                    }}
                   >
                     <FaMusic /> {podcastData.audioFile ? "Change Audio File" : "Select Audio File"}
-                  </button>
+                  </EnhancedButton>
                   
                   {podcastData.audioFile && (
                     <>
@@ -969,40 +1128,29 @@ const UploadPodcast = () => {
                     style={{ display: 'none' }}
                   />
                   
-                  {/* Custom button to trigger file selection */}
-                  <FileUploadContainer onClick={triggerImageFileInput}>
-                    <FileUploadIcon>
-                      <FaImage />
-                    </FileUploadIcon>
-                    <FileUploadText>
+                  {/* Enhanced upload area */}
+                  <EnhancedFileUploadContainer 
+                    onClick={triggerImageFileInput}
+                    active={!!podcastData.coverImage}
+                  >
+                    <EnhancedFileUploadIcon>
+                      {podcastData.coverImage ? <FaImage /> : <FaCamera />}
+                    </EnhancedFileUploadIcon>
+                    <EnhancedFileUploadText>
                       {podcastData.coverImage ? "Change cover image" : "Upload cover image"}
-                    </FileUploadText>
-                    <FileUploadHint>
+                    </EnhancedFileUploadText>
+                    <EnhancedFileUploadHint>
                       JPG, PNG, WEBP (max. 5MB, square images recommended)
-                    </FileUploadHint>
-                  </FileUploadContainer>
+                    </EnhancedFileUploadHint>
+                  </EnhancedFileUploadContainer>
                   
-                  {/* Native button alternative */}
-                  <button 
+                  {/* Enhanced button */}
+                  <EnhancedButton 
                     type="button"
                     onClick={triggerImageFileInput}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 15px',
-                      backgroundColor: '#7c3aed',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      width: '100%'
-                    }}
                   >
                     <FaImage /> {podcastData.coverImage ? "Change Cover Image" : "Select Cover Image"}
-                  </button>
+                  </EnhancedButton>
                   
                   {podcastData.coverImage && (
                     <>
@@ -1024,7 +1172,7 @@ const UploadPodcast = () => {
             </FormSection>
             
             <FormActions>
-              <CancelButton type="button" onClick={handleCancel}>
+              <CancelButton type="button" onClick={() => navigate(-1)}>
                 Cancel
               </CancelButton>
               <SubmitButton type="submit" disabled={isUploading}>
