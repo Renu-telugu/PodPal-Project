@@ -148,6 +148,7 @@ const CardImage = styled.div`
   background-image: url(${(props) => props.src});
   background-size: cover;
   background-position: center;
+  background-color: #f0f0f0; /* Fallback color */
 `;
 
 const CardOverlay = styled.div`
@@ -281,11 +282,12 @@ const NoResults = styled.div`
 
 const ExplorePodcasts = () => {
   const { user } = useAuth();
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
   const [podcasts, setPodcasts] = useState([]);
   const [filteredPodcasts, setFilteredPodcasts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [imageErrors, setImageErrors] = useState({});
 
   const handleLike = async (podcastId) => {
     try {
@@ -381,6 +383,42 @@ const ExplorePodcasts = () => {
     setFilteredPodcasts(results);
   }, [podcasts, searchQuery, activeFilter]);
 
+  // Simplify the image handling approach
+  const handleImageError = (podcastId) => {
+    setImageErrors(prev => ({
+      ...prev,
+      [podcastId]: true
+    }));
+  };
+
+  const getImageUrl = (imagePath, podcastId) => {
+    // Use a fallback image if the original one fails to load
+    if (imageErrors[podcastId]) {
+      return "https://via.placeholder.com/300x300?text=Podcast";
+    }
+    
+    // If path is empty, use a default
+    if (!imagePath) {
+      return "https://via.placeholder.com/300x300?text=No+Image";
+    }
+    
+    // If it's already a full URL, use it as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // Make sure the path starts with the correct prefix
+    if (!imagePath.startsWith('/uploads/') && !imagePath.startsWith('uploads/')) {
+      imagePath = `uploads/${imagePath}`;
+    }
+    
+    // Remove any leading slash
+    imagePath = imagePath.replace(/^\/+/, '');
+    
+    // Return the full URL
+    return `http://localhost:5000/${imagePath}`;
+  };
+
   return (
     <ExploreContainer>
       <Header>
@@ -423,8 +461,9 @@ const ExplorePodcasts = () => {
           {filteredPodcasts.map((podcast) => (
             <PodcastCard key={podcast._id}>
               <CardImage
-                src={`http://localhost:5000/${podcast.coverImagePath}`}
-                onClick={() => navigate(`/podcast/${podcast._id}`)} // Navigate to PodcastDetails
+                src={getImageUrl(podcast.coverImagePath, podcast._id)}
+                onClick={() => navigate(`/podcast/${podcast._id}`)}
+                onError={() => handleImageError(podcast._id)}
               >
                 <CardOverlay className="card-overlay">
                   <h3>{podcast.title}</h3>

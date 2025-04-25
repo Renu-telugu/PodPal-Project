@@ -1,5 +1,14 @@
 const mongoose = require("mongoose");
 
+// Create a middleware/hook to ensure coverImagePath always exists
+function ensureDefaultCoverImage(value) {
+  // If value is empty or undefined, return default image path
+  if (!value) {
+    return "uploads/podcasts/covers/default-podcast-cover.jpg";
+  }
+  return value;
+}
+
 const PodcastSchema = new mongoose.Schema(
   {
     title: {
@@ -19,7 +28,9 @@ const PodcastSchema = new mongoose.Schema(
     },
     coverImagePath: {
       type: String,
-      default: "default-podcast-cover.jpg",
+      default: "uploads/podcasts/covers/default-podcast-cover.jpg",
+      set: ensureDefaultCoverImage,
+      get: ensureDefaultCoverImage
     },
     creator: {
       type: mongoose.Schema.ObjectId,
@@ -122,6 +133,8 @@ const PodcastSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // This adds createdAt and updatedAt fields automatically
+    toJSON: { getters: true }, // Ensure getters are applied when converting to JSON
+    toObject: { getters: true } // Ensure getters are applied when converting to plain objects
   }
 );
 

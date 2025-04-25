@@ -54,6 +54,7 @@ const NavLink = styled(Link)`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   transition: all ${({ theme }) => theme.transitions.fast};
+  text-decoration: none;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.accent};
@@ -141,6 +142,15 @@ const Layout = ({ children }) => {
       <Header>
         <Logo to="/">PodPal</Logo>
         <Nav>
+          {user && (
+            <>
+              <NavLink to="/dashboard">Dashboard</NavLink>
+              <NavLink to="/explore">Explore</NavLink>
+              <NavLink to="/upload">Upload</NavLink>
+              {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+            </>
+          )}
+          
           <ThemeToggleWrapper>
             <ThemeToggle />
           </ThemeToggleWrapper>
@@ -149,6 +159,7 @@ const Layout = ({ children }) => {
             <>
               <UserWelcome>
                 Welcome, {user.name}
+                {isAdmin && <RoleIndicator isAdmin={isAdmin}> (Admin)</RoleIndicator>}
               </UserWelcome>
               <Button onClick={handleLogout}>Logout</Button>
             </>

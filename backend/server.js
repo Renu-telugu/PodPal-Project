@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const podcastUploadRoutes = require("./routes/podcastUpload");
 const podcastRoutes = require("./routes/podcast");
 const channelRoutes = require("./routes/channel");
+const fs = require("fs");
 dotenv.config();
 
 const app = express();
@@ -24,8 +25,33 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Static file serving for uploads
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Static file serving for uploads with enhanced logging
+app.use("/uploads", (req, res, next) => {
+  console.log(`Static file request: ${req.originalUrl}`);
+  next();
+}, express.static(path.join(__dirname, "uploads")));
+
+// Add a route to debug file paths
+app.get("/debug-file/:filepath", (req, res) => {
+  const filepath = req.params.filepath;
+  const fullPath = path.join(__dirname, filepath);
+  
+  console.log("Debug file request:", {
+    requestedPath: filepath,
+    fullPath: fullPath,
+    exists: fs.existsSync(fullPath)
+  });
+  
+  if (fs.existsSync(fullPath)) {
+    res.sendFile(fullPath);
+  } else {
+    res.status(404).json({ 
+      error: "File not found", 
+      requestedPath: filepath,
+      fullPath: fullPath
+    });
+  }
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -89,7 +115,6 @@ mongoose
   });
 
 // Ensure uploads directory exists
-const fs = require("fs");
 const uploadsDir = path.join(__dirname, "uploads", "podcasts", "audio");
 const coversDir = path.join(__dirname, "uploads", "podcasts", "covers");
 
