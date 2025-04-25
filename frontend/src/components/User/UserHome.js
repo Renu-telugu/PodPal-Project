@@ -25,7 +25,7 @@ const UserHome = () => {
     totalTime: '0 hours',
     growth: '0%'
   });
-  const [recentPodcasts, setRecentPodcasts] = useState([]);
+  const [recentlyPlayedPodcasts, setRecentlyPlayedPodcasts] = useState([]);
   const [popularPodcasts, setPopularPodcasts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,23 +44,24 @@ const UserHome = () => {
           return;
         }
         
-        // Fetch user's podcasts
-        const response = await fetch('/api/podcasts/user', {
+        // Fetch recently played podcasts
+        const recentlyPlayedResponse = await fetch('/api/general-podcasts/recently-played', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+        if (!recentlyPlayedResponse.ok) {
+          throw new Error('Failed to fetch recently played podcasts');
         }
         
-        const data = await response.json();
+        const recentlyPlayedData = await recentlyPlayedResponse.json();
+        console.log("Recently played podcasts:", recentlyPlayedData.podcasts);
+        setRecentlyPlayedPodcasts(recentlyPlayedData.podcasts);
         
-        // Update state with real data
-        setRecentPodcasts(data.podcasts.slice(0, 3));
+        // Update user stats
         setUserData({
-          totalPodcasts: data.count,
+          totalPodcasts: recentlyPlayedData.podcasts.length,
           totalListeners: Math.floor(Math.random() * 5000),
           totalTime: `${Math.floor(Math.random() * 50)} hours`,
           growth: `+${Math.floor(Math.random() * 25)}%`
@@ -209,42 +210,56 @@ const UserHome = () => {
         </div>
       </div>
       
-      {/* Recent Podcasts */}
+      {/* Recently Played Podcasts */}
       <div className={styles.sectionHeading}>
-        <h2>Your Recent Podcasts</h2>
-        <a href="#" className={styles.viewAll} onClick={() => navigate('/user/my-podcasts')}>View all</a>
+        <h2>Recently Played</h2>
+        <a href="#" className={styles.viewAll} onClick={() => navigate('/user/my-library')}>View all</a>
       </div>
       
       <div className={styles.podcastGrid}>
-        {recentPodcasts.map(podcast => (
-          <div key={podcast.id || podcast._id} className={styles.podcastCard} onClick={() => navigate(`/podcast/${podcast.id || podcast._id}`)}>
+        {recentlyPlayedPodcasts.map(podcast => (
+          <div key={podcast._id} className={styles.podcastCard} onClick={() => navigate(`/podcast/${podcast._id}`)}>
             <div 
               className={`${styles.podcastImage} ${getGenreClass(podcast.genre)}`}
               style={{ 
-                '--podcast-bg-image': `url(${podcast.coverImagePath || 'https://via.placeholder.com/400x400?text=PodPal'})`,
+                '--podcast-bg-image': `url(http://localhost:5000/${podcast.coverImagePath || 'default-podcast-cover.jpg'})`,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                position: 'relative',
+                width: '100%',
+                height: '200px'
               }}
             >
-              <div className={styles.overlay}></div>
+              <div className={styles.overlay} style={{ 
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5))',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}></div>
               <div className={styles.genreTag}>{podcast.genre || 'Other'}</div>
               <div className={styles.podcastTitle}>{podcast.title}</div>
-              <div className={styles.podcastSubtitle}>{podcast.creator?.name || ''}</div>
+              <div className={styles.podcastSubtitle}>{podcast.creatorDetails?.name || ''}</div>
               
-              <button className={styles.playButton}>
+              <button className={styles.playButton} onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/podcast/${podcast._id}`);
+              }}>
                 <FontAwesomeIcon icon={faPlay} />
               </button>
               
               <div className={styles.actionButtons}>
                 <button 
-                  className={`${styles.actionButton} ${likedPodcasts[podcast.id || podcast._id] ? styles.actionButtonActive : ''}`}
-                  onClick={(e) => handleLike(e, podcast.id || podcast._id)}
+                  className={`${styles.actionButton} ${likedPodcasts[podcast._id] ? styles.actionButtonActive : ''}`}
+                  onClick={(e) => handleLike(e, podcast._id)}
                 >
                   <FontAwesomeIcon icon={faHeart} />
                 </button>
                 <button 
-                  className={`${styles.actionButton} ${savedPodcasts[podcast.id || podcast._id] ? styles.actionButtonActive : ''}`}
-                  onClick={(e) => handleSave(e, podcast.id || podcast._id)}
+                  className={`${styles.actionButton} ${savedPodcasts[podcast._id] ? styles.actionButtonActive : ''}`}
+                  onClick={(e) => handleSave(e, podcast._id)}
                 >
                   <FontAwesomeIcon icon={faBookmark} />
                 </button>
@@ -260,7 +275,7 @@ const UserHome = () => {
                 </div>
                 <div className={styles.podcastStat}>
                   <FontAwesomeIcon icon={faEye} />
-                  <span>{podcast.views || 0} views</span>
+                  <span>{podcast.listeners || 0} listeners</span>
                 </div>
               </div>
             </div>
@@ -279,12 +294,23 @@ const UserHome = () => {
             <div 
               className={`${styles.podcastImage} ${getGenreClass(podcast.genre)}`}
               style={{ 
-                '--podcast-bg-image': `url(${podcast.coverImagePath || 'https://via.placeholder.com/400x400?text=PodPal'})`,
+                '--podcast-bg-image': `url(http://localhost:5000/${podcast.coverImagePath || 'default-podcast-cover.jpg'})`,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                position: 'relative',
+                width: '100%',
+                height: '200px'
               }}
             >
-              <div className={styles.overlay}></div>
+              <div className={styles.overlay} style={{ 
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5))',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}></div>
               <div className={styles.genreTag}>{podcast.genre}</div>
               <div className={styles.podcastTitle}>{podcast.title}</div>
               <div className={styles.podcastSubtitle}></div>

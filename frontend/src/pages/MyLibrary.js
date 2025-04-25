@@ -1,143 +1,226 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { FaPlay, FaHeart, FaBookmark } from "react-icons/fa";
 
-const Container = styled.div`
+const API_BASE_URL = "http://localhost:5000";
+axios.defaults.baseURL = API_BASE_URL;
+
+const LibraryContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 2rem;
 `;
 
-const Tabs = styled.div`
+const Title = styled.h1`
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors?.primary || "#7c3aed"};
+  margin-bottom: 2rem;
+`;
+
+const TabContainer = styled.div`
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 `;
 
 const Tab = styled.button`
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.5rem;
   border: none;
-  background-color: ${({ active }) => (active ? "#7c3aed" : "#e5e7eb")};
-  color: ${({ active }) => (active ? "#fff" : "#000")};
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
+  background-color: ${({ active, theme }) =>
+    active ? theme.colors?.primary || "#7c3aed" : "#f3f4f6"};
+  color: ${({ active }) => (active ? "white" : "#4b5563")};
+  transition: all 0.3s ease;
 
   &:hover {
-    background-color: ${({ active }) => (active ? "#6b21a8" : "#d1d5db")};
+    background-color: ${({ active, theme }) =>
+      active ? theme.colors?.primaryDark || "#6025c0" : "#e5e7eb"};
   }
 `;
 
-const PodcastList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+const PodcastGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 `;
 
-const PodcastItem = styled.div`
+const PodcastCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+`;
+
+const CoverImage = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+`;
+
+const PodcastInfo = styled.div`
   padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 5px;
+`;
+
+const PodcastTitle = styled.h3`
+  font-size: 1.1rem;
+  color: ${({ theme }) => theme.colors?.text || "#1f2937"};
+  margin-bottom: 0.5rem;
+`;
+
+const PodcastMeta = styled.p`
+  font-size: 0.9rem;
+  color: ${({ theme }) => theme.colors?.textLight || "#6b7280"};
+  margin-bottom: 0.5rem;
+`;
+
+const ActionBar = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+`;
+
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors?.primary || "#7c3aed"};
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors?.primaryDark || "#6025c0"};
+  }
 `;
 
 const EmptyState = styled.div`
   text-align: center;
-  color: #6b7280;
+  padding: 3rem;
+  color: ${({ theme }) => theme.colors?.textLight || "#6b7280"};
 `;
 
 const MyLibrary = () => {
   const [activeTab, setActiveTab] = useState("liked");
-  const [podcasts, setPodcasts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [likedPodcasts, setLikedPodcasts] = useState([]);
+  const [savedPodcasts, setSavedPodcasts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPodcasts = async () => {
-      setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        let endpoint = "";
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
 
-        if (activeTab === "liked") {
-          endpoint = "/api/general-podcasts/liked"; // Replace with your backend route for liked podcasts
-        } else if (activeTab === "saved") {
-          endpoint = "/api/general-podcasts/saved"; // Replace with your backend route for saved podcasts
-        }
+        const [likedResponse, savedResponse] = await Promise.all([
+          axios.get("/api/general-podcasts/liked", { headers }),
+          axios.get("/api/general-podcasts/saved", { headers }),
+        ]);
 
-        if (endpoint) {
-          const response = await axios.get(endpoint, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setPodcasts(response.data.podcasts || []);
-        } else {
-          setPodcasts([]);
-        }
+        console.log('Liked Podcasts Response:', likedResponse.data);
+        console.log('Saved Podcasts Response:', savedResponse.data);
+
+        setLikedPodcasts(likedResponse.data.podcasts || []);
+        setSavedPodcasts(savedResponse.data.podcasts || []);
+        setLoading(false);
       } catch (error) {
-        console.error(
-          "Error fetching podcasts:",
-          error.response || error.message
-        );
-      } finally {
+        console.error("Error fetching library:", error);
         setLoading(false);
       }
     };
 
     fetchPodcasts();
-  }, [activeTab]);
+  }, []);
+
+  const handlePodcastClick = (podcastId) => {
+    navigate(`/podcast/${podcastId}`);
+  };
+
+  const displayPodcasts = activeTab === "liked" ? likedPodcasts : savedPodcasts;
+
+  if (loading) {
+    return <LibraryContainer>Loading...</LibraryContainer>;
+  }
 
   return (
-    <Container>
-      <h2>My Library</h2>
-      <Tabs>
+    <LibraryContainer>
+      <Title>My Library</Title>
+      <TabContainer>
         <Tab
           active={activeTab === "liked"}
           onClick={() => setActiveTab("liked")}
         >
-          Liked
+          Liked Podcasts
         </Tab>
         <Tab
           active={activeTab === "saved"}
           onClick={() => setActiveTab("saved")}
         >
-          Saved
+          Saved Podcasts
         </Tab>
-        <Tab
-          active={activeTab === "downloaded"}
-          onClick={() => setActiveTab("downloaded")}
-        >
-          Downloaded
-        </Tab>
-      </Tabs>
+      </TabContainer>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : podcasts.length > 0 ? (
-        <PodcastList>
-          {podcasts.map((podcast) => (
-            <PodcastItem key={podcast._id}>
-              <div>
-                <h3>{podcast.title}</h3>
-                <p>{podcast.description}</p>
-              </div>
-              <button
-                onClick={() => console.log(`Play podcast ${podcast._id}`)}
-              >
-                Play
-              </button>
-            </PodcastItem>
-          ))}
-        </PodcastList>
-      ) : (
+      {displayPodcasts.length === 0 ? (
         <EmptyState>
-          {activeTab === "liked" && <p>You haven't liked any podcasts yet.</p>}
-          {activeTab === "saved" && <p>You haven't saved any podcasts yet.</p>}
-          {activeTab === "downloaded" && (
-            <p>No downloaded podcasts available.</p>
-          )}
+          <h3>No {activeTab} podcasts found</h3>
+          <p>Start exploring to {activeTab === "liked" ? "like" : "save"} some podcasts!</p>
         </EmptyState>
+      ) : (
+        <PodcastGrid>
+          {displayPodcasts.map((podcast) => (
+            <PodcastCard
+              key={podcast._id}
+              onClick={() => handlePodcastClick(podcast._id)}
+            >
+              <CoverImage
+                src={`${API_BASE_URL}/${podcast.coverImagePath}`}
+                alt={podcast.title}
+                onError={(e) => {
+                  e.target.src = `${API_BASE_URL}/default-podcast-cover.jpg`;
+                }}
+              />
+              <PodcastInfo>
+                <PodcastTitle>{podcast.title}</PodcastTitle>
+                <PodcastMeta>
+                  {podcast.creatorDetails?.name || "Unknown Creator"}
+                </PodcastMeta>
+                <ActionBar>
+                  <IconButton>
+                    <FaPlay />
+                  </IconButton>
+                  {activeTab === "liked" ? (
+                    <IconButton>
+                      <FaHeart style={{ color: "#ff4757" }} />
+                      <span>{podcast.likes?.length || 0}</span>
+                    </IconButton>
+                  ) : (
+                    <IconButton>
+                      <FaBookmark style={{ color: "#feca57" }} />
+                    </IconButton>
+                  )}
+                </ActionBar>
+              </PodcastInfo>
+            </PodcastCard>
+          ))}
+        </PodcastGrid>
       )}
-    </Container>
+    </LibraryContainer>
   );
 };
 

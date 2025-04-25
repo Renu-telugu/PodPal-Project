@@ -68,7 +68,7 @@ const PodcastSchema = new mongoose.Schema(
         "Technology",
         "True Crime",
         "TV & Film",
-        "Other"
+        "Other",
       ],
       default: "Other",
     },
@@ -76,10 +76,10 @@ const PodcastSchema = new mongoose.Schema(
       type: Number, // in seconds
       default: 0,
     },
-    likes: {
-      type: Number,
-      default: 0,
-    },
+    likes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }],
     createdAt: {
       type: Date,
       default: Date.now,
@@ -102,7 +102,7 @@ const PodcastSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    views: {
+    listeners: {
       type: Number,
       default: 0,
     },
@@ -122,8 +122,15 @@ const PodcastSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // This adds createdAt and updatedAt fields automatically
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
+
+// Virtual field to check if a user has liked the podcast
+PodcastSchema.virtual('isLiked').get(function() {
+  return this.likes && this.likes.length > 0;
+});
 
 // Create index for efficient searching
 PodcastSchema.index({ title: "text", description: "text" });

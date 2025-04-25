@@ -291,7 +291,7 @@ const ExplorePodcasts = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `/api/podcasts/${podcastId}/like`,
+        `/api/general-podcasts/${podcastId}/like`,
         {},
         {
           headers: {
@@ -299,21 +299,24 @@ const ExplorePodcasts = () => {
           },
         }
       );
-      console.log("Liked Podcast:", response.data);
+      console.log("Liked/Unliked Podcast:", response.data);
 
-      // Update the likes count in the state
+      // Update the likes count and status in the state
       setPodcasts((prevPodcasts) =>
         prevPodcasts.map((podcast) =>
           podcast._id === podcastId
-            ? { ...podcast, likes: podcast.likes + 1 }
+            ? {
+                ...podcast,
+                likes: response.data.podcast.likes.length, // Update likes count
+                liked: response.data.liked, // Update like status
+              }
             : podcast
         )
       );
     } catch (error) {
-      console.error("Error liking podcast:", error.response || error.message);
+      console.error("Error toggling like:", error.response || error.message);
     }
   };
-
   const handleSave = async (podcastId) => {
     try {
       const token = localStorage.getItem("token");
@@ -405,17 +408,15 @@ const ExplorePodcasts = () => {
         >
           All
         </FilterButton>
-        {[...new Set(podcasts.map((podcast) => podcast.genre))].map(
-          (genre) => (
-            <FilterButton
-              key={genre}
-              active={activeFilter === genre}
-              onClick={() => setActiveFilter(genre)}
-            >
-              {genre}
-            </FilterButton>
-          )
-        )}
+        {[...new Set(podcasts.map((podcast) => podcast.genre))].map((genre) => (
+          <FilterButton
+            key={genre}
+            active={activeFilter === genre}
+            onClick={() => setActiveFilter(genre)}
+          >
+            {genre}
+          </FilterButton>
+        ))}
       </FilterContainer>
 
       {filteredPodcasts.length > 0 ? (
@@ -438,7 +439,7 @@ const ExplorePodcasts = () => {
                   </PlayButton>
                   <div>
                     <ActionButton onClick={() => handleLike(podcast._id)}>
-                      <FaHeart />
+                      {podcast.liked ? <FaHeart /> : <FaRegHeart />}
                     </ActionButton>
                     <ActionButton onClick={() => handleSave(podcast._id)}>
                       <FaBookmark />
@@ -457,7 +458,7 @@ const ExplorePodcasts = () => {
                   />
                   <span>{podcast.creatorDetails.name}</span>
                 </AuthorInfo>
-                <p>Likes: {podcast.likes}</p>
+                <p>Likes: {podcast.likes ? podcast.likes.length : 0}</p>
               </CardContent>
             </PodcastCard>
           ))}

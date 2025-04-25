@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import styled from "styled-components";
+
+const API_BASE_URL = "http://localhost:5000";
+
+// Configure axios defaults
+axios.defaults.baseURL = API_BASE_URL;
 
 const PodcastDetailsContainer = styled.div`
   max-width: 800px;
@@ -40,6 +45,7 @@ const CoverImage = styled.img`
   border-radius: 8px;
   margin-bottom: 1.5rem;
 `;
+
 const ActionContainer = styled.div`
   display: flex;
   align-items: center;
@@ -70,18 +76,21 @@ const PodcastDetails = () => {
   const { podcastId } = useParams();
   const [podcast, setPodcast] = useState(null);
   const [error, setError] = useState("");
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const audioRef = useRef(null);
+  const userId = localStorage.getItem('userId');
 
   useEffect(() => {
     const fetchPodcast = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`/api/podcasts/${podcastId}`, {
+        const response = await axios.get(`/api/general-podcasts/${podcastId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("Podcast Data:", response.data); // Debugging
-        setPodcast(response.data.podcast); // Ensure you're setting the correct object
+        console.log("Podcast Data:", response.data);
+        setPodcast(response.data);
       } catch (err) {
         console.error("Error fetching podcast:", err.response || err.message);
         setError(
@@ -92,6 +101,31 @@ const PodcastDetails = () => {
 
     fetchPodcast();
   }, [podcastId]);
+
+  const handlePlay = async () => {
+    if (!hasStartedPlaying) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.post(
+          `/api/general-podcasts/${podcastId}/increment-listeners`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("Incremented listeners:", response.data);
+        setPodcast(prev => ({
+          ...prev,
+          listeners: response.data.listeners
+        }));
+        setHasStartedPlaying(true);
+      } catch (error) {
+        console.error("Error incrementing listeners:", error);
+      }
+    }
+  };
 
   const handleLike = async (podcastId) => {
     try {
@@ -105,12 +139,12 @@ const PodcastDetails = () => {
           },
         }
       );
-      console.log("Liked Podcast:", response.data);
+      console.log("Liked/Unliked Podcast:", response.data);
 
-      // Update the likes count in the state
-      setPodcast((prevPodcast) => ({
+      // Update the podcast state with the new likes array
+      setPodcast(prevPodcast => ({
         ...prevPodcast,
-        likes: prevPodcast.likes + 1,
+        likes: response.data.podcast.likes
       }));
     } catch (error) {
       console.error("Error liking podcast:", error.response || error.message);
@@ -129,10 +163,15 @@ const PodcastDetails = () => {
           },
         }
       );
-      console.log("Saved Podcast:", response.data);
-      alert("Podcast saved successfully!");
+      console.log("Saved Podcast Response:", response.data);
+      if (response.data.success) {
+        alert("Podcast saved successfully!");
+      } else {
+        alert(response.data.message || "Error saving podcast");
+      }
     } catch (error) {
       console.error("Error saving podcast:", error.response || error.message);
+      alert("Failed to save podcast. Please try again.");
     }
   };
 
@@ -144,17 +183,24 @@ const PodcastDetails = () => {
     return <div>Loading...</div>;
   }
 
+  const likeCount = podcast.likes ? podcast.likes.length : 0;
+  const isLiked = podcast.likes && podcast.likes.includes(userId);
+
   return (
     <PodcastDetailsContainer>
       <CoverImage
-        src={`http://localhost:5000/${podcast.coverImagePath}`} // Prepend the backend URL
+        src={`http://localhost:5000/${podcast.coverImagePath}`}
         alt={podcast.title}
       />
       <PodcastTitle>{podcast.title}</PodcastTitle>
       <PodcastMeta>
         {podcast.description || "No description available"}
       </PodcastMeta>
-      <AudioPlayer controls>
+      <AudioPlayer 
+        ref={audioRef}
+        controls
+        onPlay={handlePlay}
+      >
         <source
           src={`http://localhost:5000/${podcast.audioPath}`}
           type="audio/wav"
@@ -163,8 +209,12 @@ const PodcastDetails = () => {
       </AudioPlayer>
       <ActionContainer>
         <ActionButton onClick={() => handleLike(podcast._id)}>
-          {podcast.likes > 0 ? <FaHeart /> : <FaRegHeart />}
-          <span>{podcast.likes} Likes</span>
+          {isLiked ? (
+            <FaHeart style={{ color: "#ff4757" }} />
+          ) : (
+            <FaRegHeart />
+          )}
+          <span>{likeCount} Likes</span>
         </ActionButton>
         <ActionButton onClick={() => handleSave(podcast._id)}>
           <FaBookmark />
@@ -172,8 +222,8 @@ const PodcastDetails = () => {
         </ActionButton>
       </ActionContainer>
       <Analytics>
-        <p>Views: {podcast.views}</p>
-        <p>Likes: {podcast.likes}</p>
+        <p>Listeners: {podcast.listeners || 0}</p>
+        <p>Likes: {likeCount}</p>
       </Analytics>
     </PodcastDetailsContainer>
   );

@@ -36,6 +36,14 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "Podcast"
   }],
+  savedPodcasts: [{
+    type: mongoose.Schema.ObjectId,
+    ref: "Podcast"
+  }],
+  recentlyPlayed: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Podcast'
+  }],
   // Add mockId for frontend mock users
   mockId: {
     type: String,
