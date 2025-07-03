@@ -390,17 +390,38 @@ router.post(
         });
       }
 
-      // Make cover image optional with default
-      const coverImagePath = coverImage && coverImage[0] 
-        ? coverImage[0].path 
-        : "default-podcast-cover.jpg";
-
       // Sanitize the paths for storage
       const audioPathRelative = audioFile[0].path.replace(/\\/g, '/').split('backend/')[1] || audioFile[0].path;
-      const coverPathRelative = coverImage && coverImage[0]
-        ? coverImage[0].path.replace(/\\/g, '/').split('backend/')[1] || coverImage[0].path
-        : coverImagePath;
+      
+      // Ensure consistent path format for cover images
+      let coverPathRelative;
+      if (coverImage && coverImage[0]) {
+        // Normalize path for consistent URL structure across all environments
+        const pathParts = coverImage[0].path.replace(/\\/g, '/').split('backend/');
+        if (pathParts.length > 1) {
+          // If the path contains 'backend/', use the part after that
+          coverPathRelative = pathParts[1];
+        } else {
+          // Otherwise extract just the 'uploads/...' part
+          const uploadsIndex = coverImage[0].path.indexOf('uploads');
+          if (uploadsIndex !== -1) {
+            coverPathRelative = coverImage[0].path.substring(uploadsIndex);
+          } else {
+            // Fallback to the original path
+            coverPathRelative = coverImage[0].path;
+          }
+        }
+      } else {
+        coverPathRelative = "uploads/podcasts/covers/default-podcast-cover.jpg";
+      }
 
+      // Ensure the path starts with 'uploads/'
+      if (!coverPathRelative.startsWith('uploads/')) {
+        coverPathRelative = `uploads/${coverPathRelative}`;
+      }
+
+      console.log("Final cover image path:", coverPathRelative);
+      
       const podcastData = {
         title,
         description,
@@ -504,6 +525,125 @@ router.get("/:id", async (req, res) => {
     }
     res.status(200).json({ success: true, podcast });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Add a diagnostic endpoint for image paths
+router.get("/diagnostic", async (req, res) => {
+  try {
+    const podcasts = await Podcast.find().populate({
+      path: "creator",
+      select: "name email"
+    }).sort({ createdAt: -1 });
+    
+    // Add diagnostic information to each podcast
+    const podcastsWithDiagnostics = podcasts.map(podcast => {
+      const podcastObj = podcast.toObject();
+      const coverImagePath = podcast.coverImagePath;
+      
+      // Check if the file exists
+      let fullPath = path.join(__dirname, "..", coverImagePath);
+      // For paths that might not start with "uploads/"
+      if (!coverImagePath.startsWith("uploads/")) {
+        fullPath = path.join(__dirname, "..", "uploads", coverImagePath);
+      }
+      
+      return {
+        ...podcastObj,
+        diagnostics: {
+          originalCoverPath: coverImagePath,
+          fullServerPath: fullPath,
+          fileExists: fs.existsSync(fullPath),
+          recommendedUrl: `http://localhost:5000/${coverImagePath.startsWith("uploads/") ? coverImagePath : "uploads/" + coverImagePath}`,
+          isAbsolutePath: coverImagePath.startsWith("/") || coverImagePath.includes("://"),
+          createdByCurrentRequest: false // placeholder, will be filled by frontend
+        }
+      };
+    });
+    
+    res.status(200).json({ 
+      success: true, 
+      count: podcasts.length, 
+      podcasts: podcastsWithDiagnostics 
+    });
+  } catch (error) {
+    console.error("Error in diagnostic endpoint:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Fix all podcast paths
+router.post("/fix-paths", authenticateToken, async (req, res) => {
+  try {
+    // Only allow admins or special users to run this
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Get all podcasts
+    const podcasts = await Podcast.find();
+    const results = [];
+
+    // Fix paths for each podcast
+    for (const podcast of podcasts) {
+      const originalPath = podcast.coverImagePath;
+      let newPath = originalPath;
+
+      // Apply fixes to the path      
+      // 1. Make sure it starts with 'uploads/'
+      if (!newPath.startsWith('uploads/')) {
+        newPath = `uploads/${newPath.replace(/^\/+/, '')}`;
+      }
+      
+      // 2. Check if file exists in the expected location
+      const fullPath = path.join(__dirname, '..', newPath);
+      const fileExists = fs.existsSync(fullPath);
+      
+      // 3. If file doesn't exist, try alternative locations
+      let fileFound = fileExists;
+      if (!fileExists) {
+        // Try to find the file in uploads/podcasts/covers directory
+        const filename = path.basename(newPath);
+        const alternativePath = path.join(__dirname, '..', 'uploads', 'podcasts', 'covers', filename);
+        
+        if (fs.existsSync(alternativePath)) {
+          newPath = `uploads/podcasts/covers/${filename}`;
+          fileFound = true;
+        }
+      }
+      
+      // 4. If path needs to be updated and we have a valid path, update it
+      if (originalPath !== newPath) {
+        podcast.coverImagePath = newPath;
+        await podcast.save();
+        
+        results.push({
+          podcastId: podcast._id,
+          title: podcast.title,
+          originalPath,
+          newPath,
+          fileFound
+        });
+      } else if (!fileFound) {
+        // If path is correct but file not found, note it
+        results.push({
+          podcastId: podcast._id,
+          title: podcast.title,
+          path: originalPath,
+          fileFound: false,
+          status: 'File not found'
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Fixed paths for ${results.length} podcasts`,
+      results
+    });
+  } catch (error) {
+    console.error('Error fixing podcast paths:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

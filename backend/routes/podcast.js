@@ -160,37 +160,11 @@ router.get("/user", authenticateToken, async (req, res) => {
   }
 });
 
-// Get recently played podcasts
-router.get("/recently-played", authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const user = await User.findById(userId)
-      .populate({
-        path: 'recentlyPlayed',
-        populate: {
-          path: 'creatorDetails',
-          select: 'name'
-        }
-      })
-      .select('recentlyPlayed');
-    
-    console.log('Recently played podcasts:', user.recentlyPlayed);
-    res.status(200).json({ podcasts: user.recentlyPlayed || [] });
-  } catch (error) {
-    console.error("Error fetching recently played podcasts:", error.message);
-    res.status(500).json({ message: "Error fetching recently played podcasts" });
-  }
-});
-
 // Route to increment listeners count when podcast is played
 router.post("/:podcastId/increment-listeners", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user._id;
-    const podcastId = req.params.podcastId;
-
-    // Update podcast listeners count
     const podcast = await Podcast.findByIdAndUpdate(
-      podcastId,
+      req.params.podcastId,
       { $inc: { listeners: 1 } },
       { new: true }
     );
@@ -198,15 +172,6 @@ router.post("/:podcastId/increment-listeners", authenticateToken, async (req, re
     if (!podcast) {
       return res.status(404).json({ message: "Podcast not found" });
     }
-
-    // Add to user's recently played list
-    await User.findByIdAndUpdate(
-      userId,
-      { 
-        $pull: { recentlyPlayed: podcastId },  // Remove if exists
-        $push: { recentlyPlayed: { $each: [podcastId], $position: 0, $slice: 10 } }  // Add to start, keep last 10
-      }
-    );
 
     res.status(200).json({ 
       success: true, 

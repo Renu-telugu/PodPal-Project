@@ -25,7 +25,7 @@ const UserHome = () => {
     totalTime: '0 hours',
     growth: '0%'
   });
-  const [recentlyPlayedPodcasts, setRecentlyPlayedPodcasts] = useState([]);
+  const [recentPodcasts, setRecentPodcasts] = useState([]);
   const [popularPodcasts, setPopularPodcasts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,24 +44,23 @@ const UserHome = () => {
           return;
         }
         
-        // Fetch recently played podcasts
-        const recentlyPlayedResponse = await fetch('/api/general-podcasts/recently-played', {
+        // Fetch user's podcasts
+        const response = await fetch('/api/podcasts/user', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
         
-        if (!recentlyPlayedResponse.ok) {
-          throw new Error('Failed to fetch recently played podcasts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
         }
         
-        const recentlyPlayedData = await recentlyPlayedResponse.json();
-        console.log("Recently played podcasts:", recentlyPlayedData.podcasts);
-        setRecentlyPlayedPodcasts(recentlyPlayedData.podcasts);
+        const data = await response.json();
         
-        // Update user stats
+        // Update state with real data
+        setRecentPodcasts(data.podcasts.slice(0, 3));
         setUserData({
-          totalPodcasts: recentlyPlayedData.podcasts.length,
+          totalPodcasts: data.count,
           totalListeners: Math.floor(Math.random() * 5000),
           totalTime: `${Math.floor(Math.random() * 50)} hours`,
           growth: `+${Math.floor(Math.random() * 25)}%`
@@ -210,15 +209,15 @@ const UserHome = () => {
         </div>
       </div>
       
-      {/* Recently Played Podcasts */}
+      {/* Recent Podcasts */}
       <div className={styles.sectionHeading}>
-        <h2>Recently Played</h2>
-        <a href="#" className={styles.viewAll} onClick={() => navigate('/user/my-library')}>View all</a>
+        <h2>Your Recent Podcasts</h2>
+        <a href="#" className={styles.viewAll} onClick={() => navigate('/user/my-podcasts')}>View all</a>
       </div>
       
       <div className={styles.podcastGrid}>
-        {recentlyPlayedPodcasts.map(podcast => (
-          <div key={podcast._id} className={styles.podcastCard} onClick={() => navigate(`/podcast/${podcast._id}`)}>
+        {recentPodcasts.map(podcast => (
+          <div key={podcast.id || podcast._id} className={styles.podcastCard} onClick={() => navigate(`/podcast/${podcast.id || podcast._id}`)}>
             <div 
               className={`${styles.podcastImage} ${getGenreClass(podcast.genre)}`}
               style={{ 
@@ -241,25 +240,22 @@ const UserHome = () => {
               }}></div>
               <div className={styles.genreTag}>{podcast.genre || 'Other'}</div>
               <div className={styles.podcastTitle}>{podcast.title}</div>
-              <div className={styles.podcastSubtitle}>{podcast.creatorDetails?.name || ''}</div>
+              <div className={styles.podcastSubtitle}>{podcast.creator?.name || ''}</div>
               
-              <button className={styles.playButton} onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/podcast/${podcast._id}`);
-              }}>
+              <button className={styles.playButton}>
                 <FontAwesomeIcon icon={faPlay} />
               </button>
               
               <div className={styles.actionButtons}>
                 <button 
-                  className={`${styles.actionButton} ${likedPodcasts[podcast._id] ? styles.actionButtonActive : ''}`}
-                  onClick={(e) => handleLike(e, podcast._id)}
+                  className={`${styles.actionButton} ${likedPodcasts[podcast.id || podcast._id] ? styles.actionButtonActive : ''}`}
+                  onClick={(e) => handleLike(e, podcast.id || podcast._id)}
                 >
                   <FontAwesomeIcon icon={faHeart} />
                 </button>
                 <button 
-                  className={`${styles.actionButton} ${savedPodcasts[podcast._id] ? styles.actionButtonActive : ''}`}
-                  onClick={(e) => handleSave(e, podcast._id)}
+                  className={`${styles.actionButton} ${savedPodcasts[podcast.id || podcast._id] ? styles.actionButtonActive : ''}`}
+                  onClick={(e) => handleSave(e, podcast.id || podcast._id)}
                 >
                   <FontAwesomeIcon icon={faBookmark} />
                 </button>
@@ -275,7 +271,7 @@ const UserHome = () => {
                 </div>
                 <div className={styles.podcastStat}>
                   <FontAwesomeIcon icon={faEye} />
-                  <span>{podcast.listeners || 0} listeners</span>
+                  <span>{podcast.views || 0} views</span>
                 </div>
               </div>
             </div>

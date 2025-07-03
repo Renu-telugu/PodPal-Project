@@ -1,18 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { FaHeart, FaRegHeart, FaBookmark, FaRegBookmark } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaBookmark } from "react-icons/fa";
 import styled from "styled-components";
 
 const API_BASE_URL = "http://localhost:5000";
-
-// Configure axios defaults
 axios.defaults.baseURL = API_BASE_URL;
 
 const PodcastDetailsContainer = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 2rem 4vw;
+  background: ${({ theme }) => theme.colors.background || "#fafbfc"};
 `;
 
 const PodcastTitle = styled.h1`
@@ -40,7 +39,7 @@ const Analytics = styled.div`
 
 const CoverImage = styled.img`
   width: 100%;
-  max-height: 400px;
+  max-height: 300px;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 1.5rem;
@@ -72,13 +71,38 @@ const ActionButton = styled.div`
   }
 `;
 
+const SplitContainer = styled.div`
+  display: flex;
+  gap: 2rem;
+  @media (max-width: 900px) {
+    flex-direction: column;
+  }
+`;
+
+const LeftColumn = styled.div`
+  flex: 1.2;
+  min-width: 0;
+`;
+
+const RightColumn = styled.div`
+  flex: 1;
+  min-width: 0;
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  height: fit-content;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
 const PodcastDetails = () => {
   const { podcastId } = useParams();
   const [podcast, setPodcast] = useState(null);
   const [error, setError] = useState("");
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const audioRef = useRef(null);
-  const userId = localStorage.getItem('userId');
+  const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     const fetchPodcast = async () => {
@@ -89,18 +113,34 @@ const PodcastDetails = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log("Podcast Data:", response.data);
         setPodcast(response.data);
       } catch (err) {
         console.error("Error fetching podcast:", err.response || err.message);
-        setError(
-          err.response?.data?.message || "Error fetching podcast details"
-        );
+        setError(err.response?.data?.message || "Error fetching podcast details");
       }
     };
 
     fetchPodcast();
   }, [podcastId]);
+
+  useEffect(() => {
+    const getTranscript = async () => {
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/transcription/transcribe",
+          { audioUrl: `http://localhost:5000/${podcast.audioPath}` }
+        );
+        setTranscript(response.data.transcript);
+      } catch (err) {
+        console.error("Transcript fetch error:", err.message);
+        setTranscript("Transcript unavailable.");
+      }
+    };
+
+    if (podcast && podcast.audioPath) {
+      getTranscript();
+    }
+  }, [podcast]);
 
   const handlePlay = async () => {
     if (!hasStartedPlaying) {
@@ -115,10 +155,9 @@ const PodcastDetails = () => {
             },
           }
         );
-        console.log("Incremented listeners:", response.data);
-        setPodcast(prev => ({
+        setPodcast((prev) => ({
           ...prev,
-          listeners: response.data.listeners
+          listeners: response.data.listeners,
         }));
         setHasStartedPlaying(true);
       } catch (error) {
@@ -139,12 +178,9 @@ const PodcastDetails = () => {
           },
         }
       );
-      console.log("Liked/Unliked Podcast:", response.data);
-
-      // Update the podcast state with the new likes array
-      setPodcast(prevPodcast => ({
-        ...prevPodcast,
-        likes: response.data.podcast.likes
+      setPodcast((prev) => ({
+        ...prev,
+        likes: response.data.podcast.likes,
       }));
     } catch (error) {
       console.error("Error liking podcast:", error.response || error.message);
@@ -163,68 +199,55 @@ const PodcastDetails = () => {
           },
         }
       );
-      console.log("Saved Podcast Response:", response.data);
-      if (response.data.success) {
-        alert("Podcast saved successfully!");
-      } else {
-        alert(response.data.message || "Error saving podcast");
-      }
+      alert(response.data.success ? "Podcast saved successfully!" : "Error saving podcast");
     } catch (error) {
       console.error("Error saving podcast:", error.response || error.message);
       alert("Failed to save podcast. Please try again.");
     }
   };
 
-  if (error) {
-    return <div>{error}</div>;
-  }
-
-  if (!podcast) {
-    return <div>Loading...</div>;
-  }
+  if (error) return <div>{error}</div>;
+  if (!podcast) return <div>Loading...</div>;
 
   const likeCount = podcast.likes ? podcast.likes.length : 0;
   const isLiked = podcast.likes && podcast.likes.includes(userId);
 
   return (
     <PodcastDetailsContainer>
-      <CoverImage
-        src={`http://localhost:5000/${podcast.coverImagePath}`}
-        alt={podcast.title}
-      />
-      <PodcastTitle>{podcast.title}</PodcastTitle>
-      <PodcastMeta>
-        {podcast.description || "No description available"}
-      </PodcastMeta>
-      <AudioPlayer 
-        ref={audioRef}
-        controls
-        onPlay={handlePlay}
-      >
-        <source
-          src={`http://localhost:5000/${podcast.audioPath}`}
-          type="audio/wav"
-        />
-        Your browser does not support the audio element.
-      </AudioPlayer>
-      <ActionContainer>
-        <ActionButton onClick={() => handleLike(podcast._id)}>
-          {isLiked ? (
-            <FaHeart style={{ color: "#ff4757" }} />
-          ) : (
-            <FaRegHeart />
-          )}
-          <span>{likeCount} Likes</span>
-        </ActionButton>
-        <ActionButton onClick={() => handleSave(podcast._id)}>
-          <FaBookmark />
-          <span>Save</span>
-        </ActionButton>
-      </ActionContainer>
-      <Analytics>
-        <p>Listeners: {podcast.listeners || 0}</p>
-        <p>Likes: {likeCount}</p>
-      </Analytics>
+      <SplitContainer>
+        <LeftColumn>
+          <CoverImage
+            src={`http://localhost:5000/${podcast.coverImagePath}`}
+            alt={podcast.title}
+          />
+          <PodcastTitle>{podcast.title}</PodcastTitle>
+          <PodcastMeta>{podcast.description || "No description available"}</PodcastMeta>
+          <AudioPlayer ref={audioRef} controls onPlay={handlePlay}>
+            <source
+              src={`http://localhost:5000/${podcast.audioPath}`}
+              type="audio/wav"
+            />
+            Your browser does not support the audio element.
+          </AudioPlayer>
+          <ActionContainer>
+            <ActionButton onClick={() => handleLike(podcast._id)}>
+              {isLiked ? <FaHeart style={{ color: "#ff4757" }} /> : <FaRegHeart />}
+              <span>{likeCount} Likes</span>
+            </ActionButton>
+            <ActionButton onClick={() => handleSave(podcast._id)}>
+              <FaBookmark />
+              <span>Save</span>
+            </ActionButton>
+          </ActionContainer>
+         
+        </LeftColumn>
+        <RightColumn>
+          <h3 style={{ marginBottom: "1rem", color: "#4b5563" }}>Transcript</h3>
+          <p style={{ lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+            {transcript || "Transcript unavailable."}
+          </p>
+        </RightColumn>
+      </SplitContainer>
     </PodcastDetailsContainer>
   );
 };
