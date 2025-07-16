@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaRegHeart, FaBookmark } from "react-icons/fa";
 import styled from "styled-components";
+import TranscriptHighlighter from "../components/TranscriptHighlighter";
 
 const API_BASE_URL = "http://localhost:5000";
 axios.defaults.baseURL = API_BASE_URL;
@@ -101,6 +102,8 @@ const PodcastDetails = () => {
   const [error, setError] = useState("");
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [words, setWords] = useState([]);
+  const [currentWordTime, setCurrentWordTime] = useState(0);
   const audioRef = useRef(null);
   const userId = localStorage.getItem("userId");
 
@@ -131,9 +134,11 @@ const PodcastDetails = () => {
           { audioUrl: `http://localhost:5000/${podcast.audioPath}` }
         );
         setTranscript(response.data.transcript);
+        setWords(response.data.words || []);
       } catch (err) {
         console.error("Transcript fetch error:", err.message);
         setTranscript("Transcript unavailable.");
+        setWords([]);
       }
     };
 
@@ -222,7 +227,16 @@ const PodcastDetails = () => {
           />
           <PodcastTitle>{podcast.title}</PodcastTitle>
           <PodcastMeta>{podcast.description || "No description available"}</PodcastMeta>
-          <AudioPlayer ref={audioRef} controls onPlay={handlePlay}>
+          <AudioPlayer
+            ref={audioRef}
+            controls
+            onPlay={handlePlay}
+            onTimeUpdate={() => {
+              if (audioRef.current) {
+                setCurrentWordTime(audioRef.current.currentTime);
+              }
+            }}
+          >
             <source
               src={`http://localhost:5000/${podcast.audioPath}`}
               type="audio/wav"
@@ -243,9 +257,9 @@ const PodcastDetails = () => {
         </LeftColumn>
         <RightColumn>
           <h3 style={{ marginBottom: "1rem", color: "#4b5563" }}>Transcript</h3>
-          <p style={{ lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-            {transcript || "Transcript unavailable."}
-          </p>
+          <div>
+            <TranscriptHighlighter words={words} currentTime={currentWordTime} />
+          </div>
         </RightColumn>
       </SplitContainer>
     </PodcastDetailsContainer>

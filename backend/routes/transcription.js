@@ -38,7 +38,7 @@ router.post("/transcribe", async (req, res) => {
       );
 
       if (pollRes.data.status === "completed") {
-        return pollRes.data.text;
+        return pollRes.data;
       } else if (pollRes.data.status === "error") {
         throw new Error(pollRes.data.error);
       } else {
@@ -47,8 +47,9 @@ router.post("/transcribe", async (req, res) => {
       }
     };
 
-    const transcript = await poll();
-    res.json({ transcript });
+    const transcriptData = await poll();
+    // transcriptData.words is an array of {text, start, end}
+    res.json({ transcript: transcriptData.text, words: transcriptData.words });
 
   } catch (err) {
     console.error("Transcription error:", err.message);

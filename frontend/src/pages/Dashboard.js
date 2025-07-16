@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DashboardContainer,
   Sidebar,
@@ -13,13 +13,17 @@ import {
   PodcastTitle,
   PodcastCreator,
   SectionTitle,
-  UploadButton
-} from '../styles/DashboardStyles';
+  UploadButton,
+} from "../styles/DashboardStyles";
 
 // Temporary SVG icon for upload (you can replace with a proper icon library)
 const UploadIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z" />
   </svg>
 );
 
@@ -28,18 +32,48 @@ const Dashboard = () => {
 
   // Mock data - replace with real data later
   const recentPodcasts = [
-    { id: 1, title: 'Tech Talk Weekly', creator: 'TechGeeks', image: 'https://placehold.co/400' },
-    { id: 2, title: 'True Crime Stories', creator: 'Mystery Channel', image: 'https://placehold.co/400' },
-    { id: 3, title: 'Health & Wellness', creator: 'Wellness Hub', image: 'https://placehold.co/400' },
-    { id: 1, title: 'Tech Talk Weekly', creator: 'TechGeeks', image: 'https://placehold.co/400' },
-    { id: 2, title: 'True Crime Stories', creator: 'Mystery Channel', image: 'https://placehold.co/400' },
-    { id: 3, title: 'Health & Wellness', creator: 'Wellness Hub', image: 'https://placehold.co/400' },
+    {
+      id: 1,
+      title: "Tech Talk Weekly",
+      creator: "TechGeeks",
+      image: "https://placehold.co/400",
+    },
+    {
+      id: 2,
+      title: "True Crime Stories",
+      creator: "Mystery Channel",
+      image: "https://placehold.co/400",
+    },
+    {
+      id: 3,
+      title: "Health & Wellness",
+      creator: "Wellness Hub",
+      image: "https://placehold.co/400",
+    },
+    {
+      id: 1,
+      title: "Tech Talk Weekly",
+      creator: "TechGeeks",
+      image: "https://placehold.co/400",
+    },
+    {
+      id: 2,
+      title: "True Crime Stories",
+      creator: "Mystery Channel",
+      image: "https://placehold.co/400",
+    },
+    {
+      id: 3,
+      title: "Health & Wellness",
+      creator: "Wellness Hub",
+      image: "https://placehold.co/400",
+    },
     // Add more podcasts as needed
   ];
 
   const handleUpload = () => {
     // Navigate to the upload podcast page
-    navigate('/upload');
+    navigate("/upload");
   };
 
   return (
@@ -57,7 +91,7 @@ const Dashboard = () => {
           <NavLink to="/dashboard/playlist/2">Tech News</NavLink>
           <NavLink to="/dashboard/playlist/3">Bedtime Stories</NavLink>
         </NavSection>
-        
+
         {/* Upload Button in Sidebar */}
         <UploadButton onClick={handleUpload}>
           <UploadIcon />
@@ -77,7 +111,9 @@ const Dashboard = () => {
           ))}
         </Grid>
 
-        <SectionTitle style={{ marginTop: '2rem' }}>Your Top Podcasts</SectionTitle>
+        <SectionTitle style={{ marginTop: "2rem" }}>
+          Your Top Podcasts
+        </SectionTitle>
         <Grid>
           {recentPodcasts.map((podcast) => (
             <PodcastCard key={podcast.id}>
