@@ -20,7 +20,6 @@ import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import MyLibrary from "./pages/MyLibrary";
 import UserDashboard from "./components/User/UserDashboard";
-import AdminDashboard from "./components/Admin/AdminDashboard";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ExplorePodcasts from "./pages/ExplorePodcasts";
@@ -38,16 +37,10 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated() ? children : <Navigate to="/login" />;
 };
 
-const RoleBasedRoute = ({ allowedRole, children }) => {
-  const { getUserRole } = useAuth();
-  const userRole = getUserRole();
-  return userRole === allowedRole ? children : <Navigate to="/login" />;
-};
-
 // Theme-aware app content
 const ThemedApp = () => {
   const { theme } = useTheme();
-  const currentTheme = theme === 'dark' ? darkTheme : lightTheme;
+  const currentTheme = theme === "dark" ? darkTheme : lightTheme;
 
   return (
     <StyledThemeProvider theme={currentTheme}>
@@ -58,27 +51,12 @@ const ThemedApp = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route
-            path="/reset-password/:token"
-            element={<ResetPassword />}
-          />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route
             path="/user/*"
             element={
               <ProtectedRoute>
-                <RoleBasedRoute allowedRole="user">
-                  <UserDashboard />
-                </RoleBasedRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/*"
-            element={
-              <ProtectedRoute>
-                <RoleBasedRoute allowedRole="admin">
-                  <AdminDashboard />
-                </RoleBasedRoute>
+                <UserDashboard />
               </ProtectedRoute>
             }
           />
@@ -91,7 +69,10 @@ const ThemedApp = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/explore" element={<Navigate to="/user/explore" replace />} />
+          <Route
+            path="/explore"
+            element={<Navigate to="/user/explore" replace />}
+          />
           <Route path="/podcast/:podcastId" element={<PodcastDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -100,7 +81,7 @@ const ThemedApp = () => {
   );
 };
 
-const App = () => {
+function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
@@ -108,6 +89,6 @@ const App = () => {
       </ThemeProvider>
     </AuthProvider>
   );
-};
+}
 
 export default App;

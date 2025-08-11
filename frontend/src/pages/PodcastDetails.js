@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaRegHeart, FaBookmark } from "react-icons/fa";
 import styled from "styled-components";
-import TranscriptHighlighter from "../components/TranscriptHighlighter";
 
 const API_BASE_URL = "http://localhost:5000";
 axios.defaults.baseURL = API_BASE_URL;
@@ -30,12 +29,6 @@ const PodcastMeta = styled.p`
 const AudioPlayer = styled.audio`
   width: 100%;
   margin-bottom: 2rem;
-`;
-
-const Analytics = styled.div`
-  margin-top: 2rem;
-  font-size: 1rem;
-  color: ${({ theme }) => theme.colors.text || "#333"};
 `;
 
 const CoverImage = styled.img`
@@ -85,26 +78,11 @@ const LeftColumn = styled.div`
   min-width: 0;
 `;
 
-const RightColumn = styled.div`
-  flex: 1;
-  min-width: 0;
-  background: #f9f9f9;
-  padding: 1.5rem;
-  border-radius: 8px;
-  height: fit-content;
-  max-height: 80vh;
-  overflow-y: auto;
-`;
-
 const PodcastDetails = () => {
   const { podcastId } = useParams();
   const [podcast, setPodcast] = useState(null);
   const [error, setError] = useState("");
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [words, setWords] = useState([]);
-  const [currentWordTime, setCurrentWordTime] = useState(0);
-  const audioRef = useRef(null);
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
@@ -119,33 +97,14 @@ const PodcastDetails = () => {
         setPodcast(response.data);
       } catch (err) {
         console.error("Error fetching podcast:", err.response || err.message);
-        setError(err.response?.data?.message || "Error fetching podcast details");
+        setError(
+          err.response?.data?.message || "Error fetching podcast details"
+        );
       }
     };
 
     fetchPodcast();
   }, [podcastId]);
-
-  useEffect(() => {
-    const getTranscript = async () => {
-      try {
-        const response = await axios.post(
-          "http://localhost:5000/api/transcription/transcribe",
-          { audioUrl: `http://localhost:5000/${podcast.audioPath}` }
-        );
-        setTranscript(response.data.transcript);
-        setWords(response.data.words || []);
-      } catch (err) {
-        console.error("Transcript fetch error:", err.message);
-        setTranscript("Transcript unavailable.");
-        setWords([]);
-      }
-    };
-
-    if (podcast && podcast.audioPath) {
-      getTranscript();
-    }
-  }, [podcast]);
 
   const handlePlay = async () => {
     if (!hasStartedPlaying) {
@@ -204,7 +163,11 @@ const PodcastDetails = () => {
           },
         }
       );
-      alert(response.data.success ? "Podcast saved successfully!" : "Error saving podcast");
+      alert(
+        response.data.success
+          ? "Podcast saved successfully!"
+          : "Error saving podcast"
+      );
     } catch (error) {
       console.error("Error saving podcast:", error.response || error.message);
       alert("Failed to save podcast. Please try again.");
@@ -226,17 +189,10 @@ const PodcastDetails = () => {
             alt={podcast.title}
           />
           <PodcastTitle>{podcast.title}</PodcastTitle>
-          <PodcastMeta>{podcast.description || "No description available"}</PodcastMeta>
-          <AudioPlayer
-            ref={audioRef}
-            controls
-            onPlay={handlePlay}
-            onTimeUpdate={() => {
-              if (audioRef.current) {
-                setCurrentWordTime(audioRef.current.currentTime);
-              }
-            }}
-          >
+          <PodcastMeta>
+            {podcast.description || "No description available"}
+          </PodcastMeta>
+          <AudioPlayer controls onPlay={handlePlay}>
             <source
               src={`http://localhost:5000/${podcast.audioPath}`}
               type="audio/wav"
@@ -245,7 +201,11 @@ const PodcastDetails = () => {
           </AudioPlayer>
           <ActionContainer>
             <ActionButton onClick={() => handleLike(podcast._id)}>
-              {isLiked ? <FaHeart style={{ color: "#ff4757" }} /> : <FaRegHeart />}
+              {isLiked ? (
+                <FaHeart style={{ color: "#ff4757" }} />
+              ) : (
+                <FaRegHeart />
+              )}
               <span>{likeCount} Likes</span>
             </ActionButton>
             <ActionButton onClick={() => handleSave(podcast._id)}>
@@ -253,14 +213,7 @@ const PodcastDetails = () => {
               <span>Save</span>
             </ActionButton>
           </ActionContainer>
-         
         </LeftColumn>
-        <RightColumn>
-          <h3 style={{ marginBottom: "1rem", color: "#4b5563" }}>Transcript</h3>
-          <div>
-            <TranscriptHighlighter words={words} currentTime={currentWordTime} />
-          </div>
-        </RightColumn>
       </SplitContainer>
     </PodcastDetailsContainer>
   );

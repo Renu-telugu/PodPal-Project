@@ -88,12 +88,13 @@ const ToggleContainer = styled.button`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: ${({ isDarkMode }) => 
-    isDarkMode 
-      ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' 
-      : 'linear-gradient(135deg, #f9fafb 0%, #e0e7ff 100%)'};
-  border: 2px solid ${({ isDarkMode }) => 
-    isDarkMode ? 'rgba(124, 58, 237, 0.5)' : 'rgba(124, 58, 237, 0.3)'};
+  background: ${({ $isDarkMode }) =>
+    $isDarkMode
+      ? "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
+      : "linear-gradient(135deg, #f9fafb 0%, #e0e7ff 100%)"};
+  border: 2px solid
+    ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(124, 58, 237, 0.5)" : "rgba(124, 58, 237, 0.3)"};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   padding: 0;
   cursor: pointer;
@@ -102,37 +103,31 @@ const ToggleContainer = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:hover {
     transform: scale(1.1);
     animation: ${ripple} 1.5s infinite;
   }
-  
+
   &:active {
     transform: scale(0.95);
   }
-  
+
   &:focus {
     outline: none;
     animation: ${glow} 0.8s infinite;
   }
-  
+
   &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, 
-      ${({ isDarkMode }) => isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'rgba(224, 231, 255, 0.8)'} 0%, 
-      transparent 70%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    z-index: 0;
-    border-radius: 50%;
+    background: radial-gradient(
+      circle at center,
+      ${({ $isDarkMode }) =>
+          $isDarkMode ? "rgba(30, 41, 59, 0.8)" : "rgba(224, 231, 255, 0.8)"}
+        0%,
+      transparent 70%
+    );
   }
-  
+
   &:hover::before {
     opacity: 1;
   }
@@ -147,21 +142,25 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: ${({ visible }) => (visible ? 1 : 0)};
-  transform: ${({ visible }) => (visible ? 'scale(1)' : 'scale(0)')};
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  animation: ${({ visible, isDarkMode }) => 
-    visible 
-      ? (isDarkMode ? css`${rotateIn} 0.4s ease` : css`${fadeIn} 0.4s ease`) 
-      : 'none'};
-  
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transform: ${({ $visible }) => ($visible ? "scale(1)" : "scale(0)")};
+  animation: ${({ $visible, $isDarkMode }) =>
+    $visible
+      ? $isDarkMode
+        ? css`
+            ${rotateIn} 0.4s ease
+          `
+        : css`
+            ${fadeIn} 0.4s ease
+          `
+      : "none"};
+
   svg {
-    color: ${({ isDarkMode }) => 
-      isDarkMode ? '#f9fafb' : '#7c3aed'};
+    color: ${({ $isDarkMode }) => ($isDarkMode ? "#f9fafb" : "#7c3aed")};
     font-size: 18px;
     transition: all 0.4s ease;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-    
+
     &:hover {
       animation: ${spin} 4s linear infinite;
     }
@@ -172,18 +171,19 @@ const SunRays = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
-  opacity: ${({ visible }) => (visible ? 1 : 0)};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 0.4s ease;
-  
-  &::before, &::after {
-    content: '';
+
+  &::before,
+  &::after {
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
     background: rgba(255, 200, 60, 0.5);
     border-radius: 50%;
   }
-  
+
   &::before {
     width: 120%;
     height: 120%;
@@ -191,7 +191,7 @@ const SunRays = styled.div`
     opacity: 0.1;
     filter: blur(10px);
   }
-  
+
   &::after {
     width: 30%;
     height: 30%;
@@ -205,23 +205,24 @@ const MoonCraters = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
-  opacity: ${({ visible }) => (visible ? 0.5 : 0)};
+  opacity: ${({ $visible }) => ($visible ? 0.5 : 0)};
   transition: opacity 0.4s ease;
-  
-  &::before, &::after {
-    content: '';
+
+  &::before,
+  &::after {
+    content: "";
     position: absolute;
     background: rgba(30, 41, 59, 0.9);
     border-radius: 50%;
   }
-  
+
   &::before {
     width: 6px;
     height: 6px;
     top: 10px;
     right: 13px;
   }
-  
+
   &::after {
     width: 4px;
     height: 4px;
@@ -238,17 +239,17 @@ const ThemeToggle = () => {
     <ToggleContainer
       onClick={toggleTheme}
       aria-label="Toggle dark mode"
-      isDarkMode={isDarkMode}
+      $isDarkMode={isDarkMode}
       title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
-      <SunRays visible={!isDarkMode} />
-      <MoonCraters visible={isDarkMode} />
-      
-      <IconWrapper visible={!isDarkMode} isDarkMode={false}>
+      <SunRays $visible={!isDarkMode} />
+      <MoonCraters $visible={isDarkMode} />
+
+      <IconWrapper $visible={!isDarkMode} $isDarkMode={false}>
         <FaSun />
       </IconWrapper>
-      
-      <IconWrapper visible={isDarkMode} isDarkMode={true}>
+
+      <IconWrapper $visible={isDarkMode} $isDarkMode={true}>
         <FaMoon />
       </IconWrapper>
     </ToggleContainer>

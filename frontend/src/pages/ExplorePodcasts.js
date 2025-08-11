@@ -424,7 +424,8 @@ const ExplorePodcasts = () => {
           {filteredPodcasts.map((podcast) => (
             <PodcastCard key={podcast._id}>
               <CardImage
-                src={`http://localhost:5000/${podcast.coverImagePath}`}
+                src={`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/${podcast.coverImagePath}`}
+                onError={(e) => (e.target.src = "default-cover.jpg")}
                 onClick={() => navigate(`/podcast/${podcast._id}`)} // Navigate to PodcastDetails
               >
                 <CardOverlay className="card-overlay">
@@ -450,10 +451,20 @@ const ExplorePodcasts = () => {
               <CardContent>
                 <CategoryTag>{podcast.genre}</CategoryTag>
                 <h3>{podcast.title}</h3>
+                <audio controls style={{ width: "100%", marginTop: 8 }}>
+                  <source src={`${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/${podcast.audioPath}`} />
+                  Your browser does not support the audio element.
+                </audio>
                 <p>{podcast.duration || "Unknown duration"}</p>
                 <AuthorInfo>
                   <img
-                    src={`https://ui-avatars.com/api/?name=${podcast.creatorDetails.name}`}
+                    src={
+                      podcast.creatorDetails.profilePicture &&
+                      podcast.creatorDetails.profilePicture !== "default-profile.jpg"
+                        ? `${process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"}/${podcast.creatorDetails.profilePicture}`
+                        : `https://ui-avatars.com/api/?name=${podcast.creatorDetails.name}`
+                    }
+                    onError={(e) => (e.target.src = "default-profile.jpg")}
                     alt={podcast.creatorDetails.name}
                   />
                   <span>{podcast.creatorDetails.name}</span>

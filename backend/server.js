@@ -7,7 +7,9 @@ const authRoutes = require("./routes/auth");
 const podcastUploadRoutes = require("./routes/podcastUpload");
 const podcastRoutes = require("./routes/podcast");
 const channelRoutes = require("./routes/channel");
-const transcriptionRoutes = require("./routes/transcription");
+// Add this to the imports
+const adminRoutes = require("./routes/admin");
+
 const fs = require("fs");
 dotenv.config();
 
@@ -27,39 +29,44 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Static file serving for uploads with enhanced logging
-app.use("/uploads", (req, res, next) => {
-  console.log(`Static file request: ${req.originalUrl}`);
-  next();
-}, express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    console.log(`Static file request: ${req.originalUrl}`);
+    next();
+  },
+  express.static(path.join(__dirname, "uploads"))
+);
 
 // Add a route to debug file paths
 app.get("/debug-file/:filepath", (req, res) => {
   const filepath = req.params.filepath;
   const fullPath = path.join(__dirname, filepath);
-  
+
   console.log("Debug file request:", {
     requestedPath: filepath,
     fullPath: fullPath,
-    exists: fs.existsSync(fullPath)
+    exists: fs.existsSync(fullPath),
   });
-  
+
   if (fs.existsSync(fullPath)) {
     res.sendFile(fullPath);
   } else {
-    res.status(404).json({ 
-      error: "File not found", 
+    res.status(404).json({
+      error: "File not found",
       requestedPath: filepath,
-      fullPath: fullPath
+      fullPath: fullPath,
     });
   }
 });
 
 // Routes
+// Add this to the routes section
+app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/podcasts", podcastUploadRoutes);
 app.use("/api/general-podcasts", podcastRoutes);
 app.use("/api/channel", channelRoutes);
-app.use("/api/transcription", transcriptionRoutes);
 
 // Root route with more detailed health check
 app.get("/", (req, res) => {
