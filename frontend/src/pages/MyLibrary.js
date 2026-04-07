@@ -76,7 +76,7 @@ const MyLibrary = () => {
       } catch (error) {
         console.error(
           "Error fetching podcasts:",
-          error.response || error.message
+          error.response || error.message,
         );
       } finally {
         setLoading(false);

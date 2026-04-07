@@ -38,7 +38,7 @@ router.get("/:podcastId", authenticateToken, async (req, res) => {
     const podcast = await Podcast.findByIdAndUpdate(
       req.params.podcastId,
       { $inc: { views: 1 } }, // Increment views
-      { new: true }
+      { new: true },
     );
 
     if (!podcast) {
@@ -60,7 +60,7 @@ router.post("/:podcastId/like", authenticateToken, async (req, res) => {
     const podcast = await Podcast.findByIdAndUpdate(
       req.params.podcastId,
       { $inc: { likes: 1 } },
-      { new: true }
+      { new: true },
     );
 
     if (!podcast) {
